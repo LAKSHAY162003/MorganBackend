@@ -42,6 +42,9 @@ const UserSchema=new mongoose.Schema({
     // These are strings because : either "yes" or "no" !! 
 })
 
+// admin schema needs to be different because all the details of the user 
+// schema are of no use for admin !! 
+
 const User=mongoose.model("user",UserSchema);
 
 module.exports = {

@@ -6,7 +6,7 @@ const jwt=require("jsonwebtoken");
 const bcrypt=require("bcryptjs");
 const Event=require("./schemas/events");
 const {User,UserSchema} = require('./schemas/user');
-
+const Admin=require("./schemas/admin");
 
 const app=express();
 
@@ -55,7 +55,7 @@ function authorize(req,res,next){
 
 // userDataCollectionRoutes !! 
 
-// 1. Collect userDetails
+// 1. Collect userDetails { for now on adminSide }
 app.post("/user",authorize,(req,res)=>{
 
         const Name = req.body.name;
@@ -139,7 +139,7 @@ app.post("/user",authorize,(req,res)=>{
 });
 
 
-// 2. Collect EventDetails
+// 2. Collect EventDetails {on admin Side}
 // Will contains participants / attendance for each event !! 
 // this will Ngo them create an event !!
 // and post it's attendance !! and progress !!  
@@ -197,7 +197,8 @@ app.post("/event",authorize,async (req,res)=>{
 });
 
 
-// data retrival routes
+
+// data retrival routes { all admin side }
 
 // getting attendance based on sessionId !!
 app.get("/event/attendance/:id",authorize,async (req,res)=>{
@@ -238,6 +239,65 @@ app.get("/user/:community",authorize,async (req,res)=>{
 });
 
 
+// get all users list !! 
+app.get("/user",authorize,async (req,res)=>{
+
+    try{
+        const result = await User.find({});
+        if (result.length > 0) {
+            res.status(200).json({result:result});
+        }
+        else{
+            res.status(200).json({result:[]});
+        }
+
+    } 
+    catch(err){
+        res.status(500).json({message:err.message});
+    }
+
+});
+
+// update user's info !!
+app.put("/user/update/:name",authorize,async (req,res)=>{
+  try {
+    const name = req.params.name;
+    const updatedData = req.body;
+
+    const updatedUser = await User.findOneAndUpdate
+    ({'basicDetails.Name':name}, updatedData, { new: true });
+    if (!updatedUser) {
+      res.status(404).json({ error: 'User not found' });
+    }
+    else{
+      res.status(200).json(updatedUser);
+    }
+      
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// search user by name !! 
+app.get("/user/search/:name",authorize,async (req,res)=>{
+  try{
+      const name=req.params.name;
+      const result = await User.find({'basicDetails.Name':name});
+      if (result.length > 0) {
+          res.status(200).json({result:result[0]});
+      }
+      else{
+          res.status(401).json({message:'User Not Found !!'});
+      }
+  } 
+  catch(err){
+      res.status(500).json({message:err.message});
+  }
+
+});
+
+
 // get user feedbacks based on sessions 
 app.get("/events/feedbacks/:id",authorize,async (req,res)=>{
     try{
@@ -260,7 +320,7 @@ app.get("/events/feedbacks/:id",authorize,async (req,res)=>{
 
 // Data visualization Routes : 
 
-
+// ofcourse on admin side 
 // get users categorized by age { for data visualization }
 app.get("/users/age",authorize,async (req,res)=>{
     try{
@@ -434,6 +494,62 @@ const processDataForChart3 = (educationGroups) => {
         },
       ],
     };
+};
+
+
+
+// get attendance count categorized based on session !! 
+app.get("/event/attendance",authorize,async (req,res)=>{
+  try{
+      const events=await Event.find();
+      if(events.length>0){
+          // console.log(users);
+          const result=processData4(events);
+          res.status(200).json({result:result});
+          // using the result property of the json object returned we can 
+          // have that object send as prop to the component of chart.js 
+      }   
+      else{
+          res.status(200).json({result:{}});
+      }   
+  }
+  catch(err){
+      res.status(500).json({message:err.message});
+  }
+});
+
+// key : sessionId
+// value : attendance Count !! 
+const processData4 =(events) => {
+  const attendancePerSession = {};
+  
+  events.forEach((event) => {
+    const sessionId = event.sessionId;
+    const participants=event.participants;
+    if (!attendancePerSession[sessionId]) {
+      attendancePerSession[sessionId] = participants.length;
+    }
+  });
+
+      // console.log(ageGroups);
+
+      return processDataForChart4(attendancePerSession);
+};
+
+const processDataForChart4 = (attendancePerSession) => {
+  const labels = Object.keys(attendancePerSession);
+  const data = Object.values(attendancePerSession);
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'User Count',
+        data,
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+      },
+    ],
+  };
 };
 
 

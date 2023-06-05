@@ -474,26 +474,74 @@ const processData4 = (users) => {
 }
 
 
-// update user's info !! { SEE IT PROPERLY !! }
-// router.put("/update/:name", async (req, res) => {
-//   try {
-//     const name = req.params.name
-//     const updatedData = req.body
+// user Side updating the info !! { he should be only updating it !! }
+router.put("/userUpdates",authorizeUser,async(req,res)=>{
+    try{
+        // so basically authorizedUser means : he can do the change !! 
+      const {
+      basicDetails: {
+        name,
+        age,
+        gender,
+        PhoneNumber,
+        address: { address1, state, city, zip },
+        Community,
+        familyDetails: { numOfChild, maritalStatus, income, dependents },
+        primaryLanguage
+      },
+      educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
+      employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
+      SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
+      medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
+      govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
+      } = req.body;
 
-//     const updatedUser = await User.findOneAndUpdate(
-//       { "basicDetails.Name": name },
-//       updatedData,
-//       { new: true }
-//     )
-//     if (!updatedUser) {
-//       res.status(404).json({ error: "User not found" })
-//     } else {
-//       res.status(200).json(updatedUser)
-//     }
-//   } catch (error) {
-//     res.status(500).json({ error: error.message })
-//   }
-// })
+    // pwd cant be sent over frontend to usko change nahi kar sakte !! 
+      const _id =req.user._id; // Extracting userId from json web token
+      // so basically find based on the id !! and update !! 
+
+      const result=await User.find({_id:_id});
+      if(result.length>0){
+        const pwd=result.pwd;
+
+        const updatedUser = {
+          pwd,
+          _id,
+          basicDetails: {
+            name,
+            age,
+            gender,
+            PhoneNumber,
+            address: { address1, state, city, zip },
+            Community,
+            familyDetails: { numOfChild, maritalStatus, income, dependents },
+            primaryLanguage
+          },
+          educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
+          employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
+          SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
+          medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
+          govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
+        };
+
+        User.findOneAndUpdate({ _id: _id }, updatedUser, { new: true }, (err, updatedUser) => {
+          if (err) {
+            res.status(500).json({message:err.message});
+          } else {
+            res.status(200).json({ message: "User updated successfully", user: updatedUser });
+          }
+        });
+
+      }
+      else{
+        res.status(500).json({message:"No Such User Exist"});
+      }
+    }
+    catch(err){
+      res.status(500).json({message:err.message});
+    } 
+
+});
 
 
 

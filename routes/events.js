@@ -1,9 +1,8 @@
 const express = require("express")
-const isLoggedIn = require("../middleware/isLoggedIn")
 const Event=require("../models/events");
 const router = express.Router()
-
-router.use(isLoggedIn)
+const authorizeUser=require("../middleware/userAuth");
+const authorizeAdmin=require("../middleware/adminAuth");
 
 // 2. Collect EventDetails {on admin Side}
 // Will contains participants / attendance for each event !!

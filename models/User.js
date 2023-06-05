@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
  
 const UserSchema = new mongoose.Schema({
-  pwd:String,
+  pwd:{type:String, unique: true},
   _id: String, //add this using uuidv4  -  https://www.npmjs.com/package/uuidv4
   basicDetails: {
     name: String,

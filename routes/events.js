@@ -1,6 +1,6 @@
 const express = require("express")
 const isLoggedIn = require("../middleware/isLoggedIn")
-
+const Event=require("../models/events");
 const router = express.Router()
 
 router.use(isLoggedIn)
@@ -9,62 +9,131 @@ router.use(isLoggedIn)
 // Will contains participants / attendance for each event !!
 // this will Ngo them create an event !!
 // and post it's attendance !! and progress !!
-router.post("/", async (req, res) => {
-  let participants = req.body.participants // array of userObjects !!
-  let feedbacks = req.body.feedbacks // array of objects !!
-  let sessionId = req.body.sessionId
-  let category = req.body.category
-  const attendance = []
-  const feedback = []
-  try {
-    await Promise.all(
-      participants.map(async (participant) => {
-        const result = await User.find({
-          "basicDetails.Name": participant.name,
-        })
-        if (result.length > 0) {
-          //   console.log(result[0]);
-          attendance.push(result[0])
-        }
-      })
-    )
+// router.post("/", async (req, res) => {
+//   let participants = req.body.participants // array of userObjects !!
+//   let feedbacks = req.body.feedbacks // array of objects !!
+//   let sessionId = req.body.sessionId
+//   let category = req.body.category
+//   const attendance = []
+//   const feedback = []
+//   try {
+//     await Promise.all(
+//       participants.map(async (participant) => {
+//         const result = await User.find({
+//           "basicDetails.Name": participant.name,
+//         })
+//         if (result.length > 0) {
+//           //   console.log(result[0]);
+//           attendance.push(result[0])
+//         }
+//       })
+//     )
 
-    await Promise.all(
-      feedbacks.map(async (feedBack) => {
-        console.log(feedBack.user.name)
-        const result = await User.find({
-          "basicDetails.Name": feedBack.user.name,
-        })
-        if (result.length > 0) {
-          // console.log(result[0]);
-          feedback.push({
-            user: result[0],
-            content: feedBack.content,
-          })
-        }
-      })
-    )
+//     await Promise.all(
+//       feedbacks.map(async (feedBack) => {
+//         console.log(feedBack.user.name)
+//         const result = await User.find({
+//           "basicDetails.Name": feedBack.user.name,
+//         })
+//         if (result.length > 0) {
+//           // console.log(result[0]);
+//           feedback.push({
+//             user: result[0],
+//             content: feedBack.content,
+//           })
+//         }
+//       })
+//     )
 
-    const currentEvent = new Event({
-      sessionId,
-      category,
-      participants: attendance,
-      feedback,
-    })
+//     const currentEvent = new Event({
+//       sessionId,
+//       category,
+//       attended: attendance,
+//       feedback,
+//       eventName,
+//     })
+
+//     Event.insertMany([currentEvent], function (err) {
+//       if (err) {
+//         res.status(500).json({ message: err.message })
+//       } else {
+//         res.status(200).json({ message: "Success" })
+//       }
+//     })
+//   } catch (err) {
+//     res.status(500).send({ message: err.message })
+//   }
+// })
+
+
+// create new Event { without any attendance and all !! }
+router.post("/createEvent",async (req,res)=>{
+
+  const details=req.body; // we will have 
+  // sessionId , eventName,eventCategory , location in body !!
+
+    const currentEvent=new Event({
+          sessionId:details.sessionId,
+          category:details.eventCategory,
+          location:details.location,
+          eventName:details.eventName,
+          attended:[],
+          followedUp:[],
+          registered:[],
+          feedback:[]
+    });
 
     Event.insertMany([currentEvent], function (err) {
       if (err) {
-        res.status(500).json({ message: err.message })
+        res.status(500).json({message:err.message});
       } else {
-        res.status(200).json({ message: "Success" })
+        res.status(200).json({ message: "Success"});
       }
-    })
-  } catch (err) {
-    res.status(500).send({ message: err.message })
+    });
+
+
+});
+
+router.post("/markAttendance/:sessionId",async (req,res)=>{
+      try{
+            const objectId=req.body.objectId;
+            const currEvent=await Event.find({sessionId:sessionId});
+            // now currEvent.attended.push(objectId of this user !! );
+            if(currEvent.length>0){
+                const attendedArray=currEvent[0].attended;
+                attendedArray.push(objectId);
+                res.status(200).json({message:"success"});
+            }
+            else{
+                res.status(401).json({result:"No Such Event Exist"});
+            }
+      }
+      catch(err){
+          res.status(500).json({message:err.message});
+      }
+});
+
+
+// data retrival routes { all admin side }
+
+// get all events
+// to get all events !! 
+
+router.get("/",async (req,res)=>{
+  try{
+    const result=await Event.find();
+    if(result.length>0){
+      res.status(200).json({result:result});
+    }
+    else{
+      res.status(200).json({result:[]});
+    }
+  }
+  catch(err){
+    res.status(500).json({message:err.message});
   }
 })
 
-// data retrival routes { all admin side }
 
 // getting attendance based on sessionId !!
 router.get("/attendance/:id", async (req, res) => {
@@ -73,7 +142,8 @@ router.get("/attendance/:id", async (req, res) => {
     const result = await Event.find({ sessionId: sessionId })
 
     if (result.length > 0) {
-      res.status(200).json({ result: result[0].participants })
+      // SEE ATTENDED KO CHANGE KARO !! 
+      res.status(200).json({ result: result[0].attended})
     } else if (result.length == 0) {
       res.status(200).json({ result: [] })
     }

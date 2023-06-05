@@ -1,80 +1,93 @@
 const express = require("express")
 const isLoggedIn = require("../middleware/isLoggedIn")
-
 const router = express.Router()
+const { v4: uuidv4 } = require('uuid');
+const User=require("../models/User");
 
 router.use(isLoggedIn)
 // userDataCollectionRoutes !!
 
 // 1. Collect userDetails { for now on adminSide }
-router.post("/", (req, res) => {
-  const Name = req.body.name
-  const Age = req.body.age
-  const Dob = req.body.dob
-  const PhoneNumber = req.body.phoneNumber
-  const Address = req.body.address
-  const Community = req.body.community
-  const PrimaryLanguage = req.body.primaryLanguage
-  const NumOfChild = req.body.numOfChild
-  const MaritalStatus = req.body.maritalStatus
-  const Income = req.body.income
-  const currentEducationLevel = req.body.currentEducationLevel
-  const literacyStatus = req.body.literacyStatus
-  const furtherStudyInterest = req.body.furtherStudyInterest
-  const currentEmployment = req.body.currentEmployment
-  const prevEmployment = req.body.prevEmployment
-  const jobTraining = req.body.jobTraining
-  const hospitalizationRecords = req.body.hospitalizationRecords
-  const prescripton = req.body.prescripton
-  const bloodGroup = req.body.bloodGroup
-  const Allergies = req.body.allergies
-  const healthInsurance = req.body.healthInsurance
-  const rationCard = req.body.rationCard
-  const aadharCard = req.body.aadharCard
-  const esharamCard = req.body.esharamCard
-  const panCard = req.body.panCard
-  const voterId = req.body.voterId
-
-  const currentUser = new User({
+// /user/register : for registering new user !! 
+router.post("/register", (req, res) => {
+  const {
+    pwd,
     basicDetails: {
-      Name,
-      Age,
-      Dob,
+      name,
+      age,
+      gender,
       PhoneNumber,
-      Address,
+      address: { address1, state, city, zip },
       Community,
-      FamilyDetails: {
-        NumOfChild,
-        MaritalStatus,
-        Income,
+      familyDetails: { numOfChild, maritalStatus, income, dependents },
+      primaryLanguage
+    },
+    educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
+    employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
+    SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
+    medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
+    govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
+  } = req.body;
+
+  const _id = uuidv4();
+  const currentUser =new User({
+    pwd,
+    _id,
+    basicDetails: {
+      name,
+      age,
+      gender,
+      PhoneNumber,
+      address: {
+        address1,
+        state,
+        city,
+        zip
       },
-      PrimaryLanguage,
+      Community,
+      familyDetails: {
+        numOfChild,
+        maritalStatus,
+        income,
+        dependents
+      },
+      primaryLanguage
     },
     educationStatus: {
       currentEducationLevel,
-      literacyStatus,
-      furtherStudyInterest,
+      ongoingEducation,
+      furtherStudyInterest
     },
     employmentStatus: {
       currentEmployment,
+      workNature,
+      workIndustry,
       prevEmployment,
-      jobTraining,
+      openForEmployment
+    },
+    SocioeconomicStatus: {
+      cleanWaterAccess,
+      electricityAccess,
+      housingType,
+      transportationAccess
     },
     medicalRecords: {
       hospitalizationRecords,
-      prescripton,
+      chronicIllnesses,
+      currentMedications,
       bloodGroup,
-      Allergies,
-      healthInsurance,
+      allergies,
+      vaccinationRecords,
+      healthInsurance
     },
     govtSchemes: {
       rationCard,
       aadharCard,
       esharamCard,
       panCard,
-      voterId,
-    },
-  })
+      voterId
+    }
+  });
 
   User.insertMany([currentUser], function (err) {
     if (err) {
@@ -83,22 +96,9 @@ router.post("/", (req, res) => {
       res.status(200).json({ message: "Success !!" })
     }
   })
+
 })
 
-// get userList based on Community { For Community management tool }
-router.get("/:community", async (req, res) => {
-  try {
-    const community = req.params.community
-    const result = await User.find({ "basicDetails.Community": community })
-    if (result.length > 0) {
-      res.status(200).json({ result: result })
-    } else {
-      res.status(200).json({ result: [] })
-    }
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
 
 // get all users list !!
 router.get("/", async (req, res) => {
@@ -113,6 +113,72 @@ router.get("/", async (req, res) => {
     res.status(500).json({ message: err.message })
   }
 })
+
+
+// filter user by Community
+router.get("/filter/community", async (req, res) => {
+  try {
+    const community = req.body.community;
+    const result = await User.find({ "basicDetails.Community": community })
+    if (result.length > 0) {
+      res.status(200).json({ result: result })
+    } else {
+      res.status(200).json({ result: [] })
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
+
+// filter user by age
+router.get("/filter/age", async (req, res) => {
+  try {
+    const age = req.body.age;
+    const result = await User.find({ "basicDetails.age": age })
+    if (result.length > 0) {
+      res.status(200).json({ result: result })
+    } else {
+      res.status(200).json({ result: [] })
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
+// filter user by name 
+router.get("/filter/name", async (req, res) => {
+  try {
+    const name = req.body.name;
+    const result = await User.find({ "basicDetails.name": name })
+      // UserDetails
+    if (result.length > 0) {
+      res.status(200).json({ result: result })
+    } else {
+      res.status(401).json({ message: "User Not Found !!" })
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
+// filter user by phoneNumber
+router.get("/filter/phoneNumber", async (req, res) => {
+  try {
+    const PhoneNumber = req.body.phoneNumber;
+    const result = await User.find({ "basicDetails.PhoneNumber": PhoneNumber })
+    if (result.length > 0) {
+      res.status(200).json({ result: result })
+    } else {
+      res.status(200).json({ result: [] })
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+});
+
+
+
 
 // update user's info !!
 router.put("/update/:name", async (req, res) => {
@@ -135,23 +201,10 @@ router.put("/update/:name", async (req, res) => {
   }
 })
 
-// search user by name !!
-router.get("/search/:name", async (req, res) => {
-  try {
-    const name = req.params.name
-    const result = await User.find({ "basicDetails.Name": name })
-    if (result.length > 0) {
-      res.status(200).json({ result: result[0] })
-    } else {
-      res.status(401).json({ message: "User Not Found !!" })
-    }
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
 
-// get users categorized by education levels { For data visualization }
-router.get("/education", async (req, res) => {
+
+// group by education levels
+router.get("/group/education", async (req, res) => {
   try {
     const users = await User.find()
     if (users.length > 0) {
@@ -186,32 +239,11 @@ const processData3 = (users) => {
 
   // console.log(ageGroups);
 
-  return processDataForChart3(educationGroups)
+  return (educationGroups);
 }
 
-const processDataForChart3 = (educationGroups) => {
-  const labels = Object.keys(educationGroups)
-  const data = Object.values(educationGroups).map(
-    (usersArray) => usersArray.length
-  )
-
-  return {
-    labels,
-    datasets: [
-      {
-        label: "User Count",
-        data,
-        backgroundColor: "rgba(75, 192, 192, 0.6)",
-      },
-    ],
-  }
-}
-
-// Data visualization Routes :
-
-// ofcourse on admin side
-// get users categorized by age { for data visualization }
-router.get("/age", async (req, res) => {
+// group by age 
+router.get("/group/age", async (req, res) => {
   try {
     const users = await User.find()
     if (users.length > 0) {
@@ -233,7 +265,7 @@ const processData = (users) => {
 
   // Categorize users by age
   users.forEach((user) => {
-    const age = user.basicDetails.Age
+    const age = user.basicDetails.age
 
     // Check if the age group exists, if not create it
     if (!ageGroups[age]) {
@@ -246,26 +278,12 @@ const processData = (users) => {
 
   // console.log(ageGroups);
 
-  return processDataForChart(ageGroups)
+  return (ageGroups);
 }
 
-const processDataForChart = (ageGroups) => {
-  const labels = Object.keys(ageGroups)
-  const data = Object.values(ageGroups).map((usersArray) => usersArray.length)
 
-  return {
-    labels,
-    datasets: [
-      {
-        label: "User Count",
-        data,
-        backgroundColor: "rgba(75, 192, 192, 0.6)",
-      },
-    ],
-  }
-}
-
-router.get("/community", async (req, res) => {
+// group by community 
+router.get("/group/community", async (req, res) => {
   try {
     const users = await User.find()
     if (users.length > 0) {
@@ -300,25 +318,47 @@ const processData2 = (users) => {
 
   // console.log(ageGroups);
 
-  return processDataForChart2(communityGroups)
+  return (communityGroups);
 }
 
-const processDataForChart2 = (communityGroups) => {
-  const labels = Object.keys(communityGroups)
-  const data = Object.values(communityGroups).map(
-    (usersArray) => usersArray.length
-  )
 
-  return {
-    labels,
-    datasets: [
-      {
-        label: "User Count",
-        data,
-        backgroundColor: "rgba(75, 192, 192, 0.6)",
-      },
-    ],
+// group by gender 
+router.get("/group/gender", async (req, res) => {
+  try {
+    const users = await User.find()
+    if (users.length > 0) {
+      // console.log(users);
+      const result = processData4(users)
+      res.status(200).json({ result: result })
+      // using the result property of the json object returned we can
+      // have that object send as prop to the component of chart.js
+    } else {
+      res.status(200).json({ result: {} })
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message })
   }
+})
+
+const processData4 = (users) => {
+  const genderGroups = {}
+
+  // Categorize users by age
+  users.forEach((user) => {
+    const gender = user.basicDetails.gender
+
+    // Check if the age group exists, if not create it
+    if (!genderGroups[gender]) {
+      genderGroups[gender] = []
+    }
+
+    // Add the user to the respective age group
+    genderGroups[gender].push(user)
+  })
+
+  // console.log(ageGroups);
+
+  return (genderGroups);
 }
 
 module.exports = router

@@ -1,20 +1,24 @@
 const mongoose = require("mongoose")
-const { User } = require("./User")
+// const { User } = require("./User");
 
 const eventSchema = new mongoose.Schema({
-  category: String,
+  sessionId:String, // _id: String, //add this using uuidv4  -  https://www.npmjs.com/package/uuidv4
+  category:String,// category means like whether it is a legal camp or what !!
+  eventName:String,
+  eventLocation:String,
   feedback: [
     {
       uid: mongoose.Types.ObjectId,
       content: String,
     },
   ],
-  registered: [mongoose.Types.ObjectId],
-  attended: [mongoose.Types.ObjectId],
-  followedUp: [mongoose.Types.ObjectId],
+  registered:[{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+  attended: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+  followedUp:[{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
 })
 // progress ? checklist ? how to maintain ?
-// TODO: add fields for adding event description, event images?, event tasks/checklist
+// TODO: add fields for adding event description, event images?, 
+// event tasks/checklist
 
 
 const Event = mongoose.model("event", eventSchema)

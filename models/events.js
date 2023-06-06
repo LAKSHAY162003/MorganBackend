@@ -16,7 +16,7 @@ const eventSchema = new mongoose.Schema({
   },
   //  mongoose.Schema.Types.ObjectId : this is not used bcz : 
   // we are using non standard technique to generate id !! 
-
+  // to save us from BSONTYPE ERROR WE DID THIS !!
   // ref :user is creating some index errors / uniqueness errors !! 
   attended:{
     type:[{ type: String}],

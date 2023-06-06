@@ -4,6 +4,8 @@ const router = express.Router()
 const authorizeUser=require("../middleware/userAuth");
 const authorizeAdmin=require("../middleware/adminAuth");
 const { v4: uuidv4 } = require('uuid');
+const User=require("../models/User");
+
 
 // 2. Collect EventDetails {on admin Side}
 // Will contains participants / attendance for each event !!
@@ -99,8 +101,8 @@ router.post("/markAttendance",async (req,res)=>{
             const userId=req.body.userId;
 
             const event = await Event.findById(eventId);
-            if (!event.registered.includes(userId)) {
-              event.registered.push(userId);
+            if (!event.attended.includes(userId)) {
+              event.attended.push(userId);
             } else {
               res.status(500).json({message:'User is already registered for this event.'});
             }
@@ -117,7 +119,6 @@ router.post("/markAttendance",async (req,res)=>{
 
 // get all events
 // to get all events !! 
-
 router.get("/",async (req,res)=>{
   try{
     const result=await Event.find();
@@ -135,28 +136,68 @@ router.get("/",async (req,res)=>{
 
 
 // getting attendance based on sessionId !!
-router.get("/attendance/:id", async (req, res) => {
+router.get("/attendance", async (req, res) => {
   try {
-    let sessionId = req.params.id // accessing the request parameters !!
-    const result = await Event.find({ sessionId: sessionId })
+    let eventId = req.body.eventId // accessing the request parameters !!
 
-    if (result.length > 0) {
-      // SEE ATTENDED KO CHANGE KARO !! 
-      res.status(200).json({ result: result[0].attended})
-    } else if (result.length == 0) {
-      res.status(200).json({ result: [] })
+    Event.findById(eventId) // Replace `eventId` with the actual event ID
+  .exec(async (err, result) => {
+    if (err) {
+      res.status(500).json({ message: err.message });
+    } else {
+      const idList = result.attended;
+
+      // Fetch user details for each ID in `idList`
+      try {
+        const attendanceList = await User.find({ _id: { $in: idList } });
+
+        res.status(200).json({ result: attendanceList });
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
     }
+  });
+
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
 })
 
-// get user feedbacks based on sessions
-router.get("/feedbacks/:id", async (req, res) => {
+// getting registerList based on sessionId
+router.get("/registeredList", async (req, res) => {
   try {
-    const sessionId = req.params.id
+    let eventId = req.body.eventId // accessing the request parameters !!
 
-    const result = await Event.find({ sessionId: sessionId })
+    Event.findById(eventId) // Replace `eventId` with the actual event ID
+  .exec(async (err, result) => {
+    if (err) {
+      res.status(500).json({ message: err.message });
+    } else {
+      const idList = result.registered;
+
+      // Fetch user details for each ID in `idList`
+      try {
+        const registerList = await User.find({ _id: { $in: idList } });
+
+        res.status(200).json({ result: registerList });
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    }
+  });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
+
+
+// get user feedbacks based on sessions
+router.get("/feedbacks", async (req, res) => {
+  try {
+    const eventId = req.body.eventId
+    const result = await Event.find({ _id: eventId })
     if (result.length > 0) {
       res.status(200).json({ result: result[0].feedback })
     } else {
@@ -168,8 +209,9 @@ router.get("/feedbacks/:id", async (req, res) => {
 })
 
 
-// get attendance count categorized based on session !!
-router.get("/attendance", async (req, res) => {
+// group sessions based on sessionIds and display there 
+// attendance , register and followed up count !!
+router.get("/group/attendance", async (req, res) => {
   try {
     const events = await Event.find()
     if (events.length > 0) {
@@ -187,37 +229,32 @@ router.get("/attendance", async (req, res) => {
 })
 
 // key : sessionId
-// value : attendance Count !!
-const processData4 = (events) => {
-  const attendancePerSession = {}
+// value : eventSummary !!
+function processData4(events) {
+  const result = {};
 
+  // Iterate over each event
   events.forEach((event) => {
-    const sessionId = event.sessionId
-    const participants = event.participants
-    if (!attendancePerSession[sessionId]) {
-      attendancePerSession[sessionId] = participants.length
-    }
-  })
+    const eventId = event._id;
+    const eventName = event.eventName;
+    const attendedCount = event.attended.length;
+    const registeredCount = event.registered.length;
+    const followedUpCount = event.followedUp.length;
 
-  // console.log(ageGroups);
+    // Create an object with the desired values
+    const eventSummary = {
+      eventName,
+      attendedCount,
+      registeredCount,
+      followedUpCount,
+    };
 
-  return processDataForChart4(attendancePerSession)
+    // Add the eventSummary object to the result using sessionId as the key
+    result[eventId] = eventSummary;
+  });
+
+  return result;
 }
 
-const processDataForChart4 = (attendancePerSession) => {
-  const labels = Object.keys(attendancePerSession)
-  const data = Object.values(attendancePerSession)
-
-  return {
-    labels,
-    datasets: [
-      {
-        label: "User Count",
-        data,
-        backgroundColor: "rgba(75, 192, 192, 0.6)",
-      },
-    ],
-  }
-}
 
 module.exports = router

@@ -11,6 +11,108 @@ const authorizeAdmin=require("../middleware/adminAuth");
 const Event=require("../models/events");
 
 
+router.post("/register/admin", (req, res) => {
+  try{
+    const {
+      pwd,
+      basicDetails: {
+        name,
+        age,
+        gender,
+        PhoneNumber,
+        address: { address1, state, city, zip },
+        Community,
+        familyDetails: { numOfChild, maritalStatus, income, dependents },
+        primaryLanguage
+      },
+      educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
+      employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
+      SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
+      medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
+      govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
+    } = req.body;
+  
+    const _id = uuidv4();
+    
+    const saltRounds = 10;
+        bcrypt.hash(pwd, saltRounds, function(err, hash){
+                  const currentUser =new User({
+              pwd:hash,
+              _id,
+              basicDetails: {
+                name,
+                age,
+                gender,
+                PhoneNumber,
+                address: {
+                  address1,
+                  state,
+                  city,
+                  zip
+                },
+                Community,
+                familyDetails: {
+                  numOfChild,
+                  maritalStatus,
+                  income,
+                  dependents
+                },
+                primaryLanguage
+              },
+              educationStatus: {
+                currentEducationLevel,
+                ongoingEducation,
+                furtherStudyInterest
+              },
+              employmentStatus: {
+                currentEmployment,
+                workNature,
+                workIndustry,
+                prevEmployment,
+                openForEmployment
+              },
+              SocioeconomicStatus: {
+                cleanWaterAccess,
+                electricityAccess,
+                housingType,
+                transportationAccess
+              },
+              medicalRecords: {
+                hospitalizationRecords,
+                chronicIllnesses,
+                currentMedications,
+                bloodGroup,
+                allergies,
+                vaccinationRecords,
+                healthInsurance
+              },
+              govtSchemes: {
+                rationCard,
+                aadharCard,
+                esharamCard,
+                panCard,
+                voterId
+              }
+            });
+  
+            User.insertMany([currentUser], function (err) {
+              if (err) {
+                res.status(500).json({ message: err.message })
+              } else {
+                const user={_id:_id,role:"User"}; 
+                const accessToken=jwt.sign(user,process.env.SECRET_KEY);
+                res.status(200).json({accessToken:accessToken});
+              }
+            })
+  
+        });
+  }
+  catch(err){
+    console.error(error);
+    res.status(500).json({ message: 'Error occurred while saving data.' });
+  }
+})
+
 // registeration done by the userItself !! it is that route 
 router.post("/register/byUser", (req, res) => {
   try{

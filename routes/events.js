@@ -14,7 +14,7 @@ router.post("/createEvent",authorizeAdmin,async (req,res)=>{
     const _id=uuidv4(); // auto generate !! 
     const currentEvent=new Event({
           _id,
-          category:details.eventCategory,
+          category:details.category,
           location:details.location,
           eventName:details.eventName,
           eventStartTime:new Date(),
@@ -77,7 +77,7 @@ router.get("/",authorizeAdmin,async (req,res)=>{
 // getting attendance based on sessionId !!
 router.get("/attendance",authorizeAdmin, async (req, res) => {
   try {
-    let eventId = req.body.eventId // accessing the request parameters !!
+    let eventId = req.query.eventId // accessing the request parameters !!
 
     Event.findById(eventId) // Replace `eventId` with the actual event ID
   .exec(async (err, result) => {
@@ -85,7 +85,6 @@ router.get("/attendance",authorizeAdmin, async (req, res) => {
       res.status(500).json({ message: err.message });
     } else {
       const idList = result.attended;
-
       // Fetch user details for each ID in `idList`
       try {
         const attendanceList = await User.find({ _id: { $in: idList } });

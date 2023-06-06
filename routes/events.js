@@ -69,7 +69,7 @@ const User=require("../models/User");
 
 
 // create new Event { without any attendance and all !! }
-router.post("/createEvent",async (req,res)=>{
+router.post("/createEvent",authorizeAdmin,async (req,res)=>{
 
   const details=req.body; 
     const _id=uuidv4(); // auto generate !! 
@@ -95,7 +95,7 @@ router.post("/createEvent",async (req,res)=>{
 });
 
 // mark Attendance from admin Side !! 
-router.post("/markAttendance",async (req,res)=>{
+router.post("/markAttendance",authorizeAdmin,async (req,res)=>{
       try{
             let eventId=req.body.eventId;
             const userId=req.body.userId;
@@ -119,7 +119,7 @@ router.post("/markAttendance",async (req,res)=>{
 
 // get all events
 // to get all events !! 
-router.get("/",async (req,res)=>{
+router.get("/",authorizeAdmin,async (req,res)=>{
   try{
     const result=await Event.find();
     if(result.length>0){
@@ -136,7 +136,7 @@ router.get("/",async (req,res)=>{
 
 
 // getting attendance based on sessionId !!
-router.get("/attendance", async (req, res) => {
+router.get("/attendance",authorizeAdmin, async (req, res) => {
   try {
     let eventId = req.body.eventId // accessing the request parameters !!
 
@@ -164,7 +164,7 @@ router.get("/attendance", async (req, res) => {
 })
 
 // getting registerList based on sessionId
-router.get("/registeredList", async (req, res) => {
+router.get("/registeredList",authorizeAdmin, async (req, res) => {
   try {
     let eventId = req.body.eventId // accessing the request parameters !!
 
@@ -194,7 +194,7 @@ router.get("/registeredList", async (req, res) => {
 
 
 // get user feedbacks based on sessions
-router.get("/feedbacks", async (req, res) => {
+router.get("/feedbacks",authorizeAdmin,async (req, res) => {
   try {
     const eventId = req.body.eventId
     const result = await Event.find({ _id: eventId })
@@ -211,7 +211,7 @@ router.get("/feedbacks", async (req, res) => {
 
 // group sessions based on sessionIds and display there 
 // attendance , register and followed up count !!
-router.get("/group/attendance", async (req, res) => {
+router.get("/group/attendance",authorizeAdmin, async (req, res) => {
   try {
     const events = await Event.find()
     if (events.length > 0) {

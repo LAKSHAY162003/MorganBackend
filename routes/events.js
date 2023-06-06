@@ -7,67 +7,6 @@ const { v4: uuidv4 } = require('uuid');
 const User=require("../models/User");
 
 
-// 2. Collect EventDetails {on admin Side}
-// Will contains participants / attendance for each event !!
-// this will Ngo them create an event !!
-// and post it's attendance !! and progress !!
-// router.post("/", async (req, res) => {
-//   let participants = req.body.participants // array of userObjects !!
-//   let feedbacks = req.body.feedbacks // array of objects !!
-//   let sessionId = req.body.sessionId
-//   let category = req.body.category
-//   const attendance = []
-//   const feedback = []
-//   try {
-//     await Promise.all(
-//       participants.map(async (participant) => {
-//         const result = await User.find({
-//           "basicDetails.Name": participant.name,
-//         })
-//         if (result.length > 0) {
-//           //   console.log(result[0]);
-//           attendance.push(result[0])
-//         }
-//       })
-//     )
-
-//     await Promise.all(
-//       feedbacks.map(async (feedBack) => {
-//         console.log(feedBack.user.name)
-//         const result = await User.find({
-//           "basicDetails.Name": feedBack.user.name,
-//         })
-//         if (result.length > 0) {
-//           // console.log(result[0]);
-//           feedback.push({
-//             user: result[0],
-//             content: feedBack.content,
-//           })
-//         }
-//       })
-//     )
-
-//     const currentEvent = new Event({
-//       sessionId,
-//       category,
-//       attended: attendance,
-//       feedback,
-//       eventName,
-//     })
-
-//     Event.insertMany([currentEvent], function (err) {
-//       if (err) {
-//         res.status(500).json({ message: err.message })
-//       } else {
-//         res.status(200).json({ message: "Success" })
-//       }
-//     })
-//   } catch (err) {
-//     res.status(500).send({ message: err.message })
-//   }
-// })
-
-
 // create new Event { without any attendance and all !! }
 router.post("/createEvent",authorizeAdmin,async (req,res)=>{
 

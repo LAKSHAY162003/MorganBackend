@@ -546,6 +546,43 @@ router.put("/userUpdates",authorizeUser,async(req,res)=>{
 });
 
 
+// Show All the Events in which he/she has not registered !! 
+router.get("/getUnregisteredEvents",authorizeUser,(req,res)=>{
+
+    const userId=req.user._id;
+    // getAllEvents where registered.includes(userId) is false !! 
+    Event.find({ registered: { $nin: [userId] } })
+      .exec((err, events) => {
+      if (err) {
+        res.status(500).json({message:err.message});
+      } else {
+        res.status(200).json({events:events});
+     }
+    });
+
+});
+
+
+// Show All the Events in which he/she has registered but not attended !!
+// whenever user will click on frontend side to attend the page will 
+// refetch this list again !! 
+router.get("/getRegisteredEvents",authorizeUser,(req,res)=>{
+
+  const userId=req.user._id;
+  // getAllEvents where registered.includes(userId) is false !! 
+  Event.find({ registered: { $in: [userId] }, attended: { $nin: [userId] } })
+    .exec((err, events) => {
+    if (err) {
+      res.status(500).json({message:err.message});
+    } else {
+      res.status(200).json({events:events});
+   }
+  });
+
+});
+
+
+
 // now : REGISTER , ATTEND , FOLLOW UP AND FEEDBACK AN EVENT OPTION !!
 // FOR THE USER !!
 // All of them will be post requests bcz we are adding a user !! 

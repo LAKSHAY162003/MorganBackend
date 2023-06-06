@@ -8,6 +8,8 @@ const jwt=require("jsonwebtoken");
 const bcrypt=require("bcryptjs");
 const authorizeUser=require("../middleware/userAuth");
 const authorizeAdmin=require("../middleware/adminAuth");
+const Event=require("../models/events");
+
 
 // registeration done by the userItself !! it is that route 
 router.post("/register/byUser", (req, res) => {
@@ -544,8 +546,83 @@ router.put("/userUpdates",authorizeUser,async(req,res)=>{
 });
 
 
-// now : REGISTER AND ATTEND AN EVENT OPTION !!
+// now : REGISTER , ATTEND , FOLLOW UP AND FEEDBACK AN EVENT OPTION !!
+// FOR THE USER !!
+// All of them will be post requests bcz we are adding a user !! 
+router.post("/registerForEvent",authorizeUser,async(req,res)=>{
+  try{
+    let eventId=req.body.eventId;
+    const userId=req.user._id;
+    const event = await Event.findById(eventId);
+    if (!event.registered.includes(userId)) {
+      event.registered.push(userId);
+    } else {
+      res.status(500).json({message:'User is already registered for this event.'});
+    }
+    await event.save();
+    res.status(200).json({message:"Success !!"});
+  }
+  catch(err){
+    res.status(500).json({message:err.message});
+  }
+})
 
 
+router.post("/attendEvent",authorizeUser,async(req,res)=>{
+  try{
+    let eventId=req.body.eventId;
+    const userId=req.user._id;
+    const event = await Event.findById(eventId);
+    if (!event.attended.includes(userId)) {
+      event.attended.push(userId);
+    } else {
+      res.status(500).json({message:'User is already registered for this event.'});
+    }
+    await event.save();
+    res.status(200).json({message:"Success !!"});
+  }
+  catch(err){
+    res.status(500).json({message:err.message});
+  }
+})
+
+router.post("/followUpForEvent",authorizeUser,async(req,res)=>{
+  try{
+    let eventId=req.body.eventId;
+    const userId=req.user._id;
+    const event = await Event.findById(eventId);
+    if (!event.followedUp.includes(userId)) {
+      event.followedUp.push(userId);
+    } else {
+      res.status(500).json({message:'User is already registered for this event.'});
+    }
+    await event.save();
+    res.status(200).json({message:"Success !!"});
+  }
+  catch(err){
+    res.status(500).json({message:err.message});
+  }
+})
+
+router.post("/feedbackForEvent",authorizeUser,async(req,res)=>{
+  try{
+    let eventId=req.body.eventId;
+    let content=req.body.content;
+    const userId=req.user._id;
+    const event = await Event.findById(eventId);
+    
+    // now create a feedback
+    const currentFeedback={
+      uid: userId,
+      content: content,
+    }
+    event.feedback.push(currentFeedback);
+    await event.save();
+    res.status(200).json({message:"Success !!"});
+  }
+  catch(err){
+    res.status(500).json({message:err.message});
+  }
+})
 
 module.exports = router

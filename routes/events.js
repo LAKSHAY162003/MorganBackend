@@ -3,6 +3,7 @@ const Event=require("../models/events");
 const router = express.Router()
 const authorizeUser=require("../middleware/userAuth");
 const authorizeAdmin=require("../middleware/adminAuth");
+const { v4: uuidv4 } = require('uuid');
 
 // 2. Collect EventDetails {on admin Side}
 // Will contains participants / attendance for each event !!
@@ -68,18 +69,16 @@ const authorizeAdmin=require("../middleware/adminAuth");
 // create new Event { without any attendance and all !! }
 router.post("/createEvent",async (req,res)=>{
 
-  const details=req.body; // we will have 
-  // sessionId , eventName,eventCategory , location in body !!
-
+  const details=req.body; 
+    const _id=uuidv4(); // auto generate !! 
     const currentEvent=new Event({
-          sessionId:details.sessionId,
+          _id,
           category:details.eventCategory,
           location:details.location,
           eventName:details.eventName,
-          attended:[],
-          followedUp:[],
-          registered:[],
-          feedback:[]
+          eventStartTime:new Date(),
+          eventDuration:details.eventDuration,
+          eventDetails:details.eventDetails
     });
 
     Event.insertMany([currentEvent], function (err) {
@@ -93,19 +92,20 @@ router.post("/createEvent",async (req,res)=>{
 
 });
 
-router.post("/markAttendance/:sessionId",async (req,res)=>{
+// mark Attendance from admin Side !! 
+router.post("/markAttendance",async (req,res)=>{
       try{
-            const objectId=req.body.objectId;
-            const currEvent=await Event.find({sessionId:sessionId});
-            // now currEvent.attended.push(objectId of this user !! );
-            if(currEvent.length>0){
-                const attendedArray=currEvent[0].attended;
-                attendedArray.push(objectId);
-                res.status(200).json({message:"success"});
+            let eventId=req.body.eventId;
+            const userId=req.body.userId;
+
+            const event = await Event.findById(eventId);
+            if (!event.registered.includes(userId)) {
+              event.registered.push(userId);
+            } else {
+              res.status(500).json({message:'User is already registered for this event.'});
             }
-            else{
-                res.status(401).json({result:"No Such Event Exist"});
-            }
+            await event.save();
+            res.status(200).json({message:"Success !!"});
       }
       catch(err){
           res.status(500).json({message:err.message});

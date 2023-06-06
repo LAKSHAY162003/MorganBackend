@@ -544,5 +544,8 @@ router.put("/userUpdates",authorizeUser,async(req,res)=>{
 });
 
 
+// now : REGISTER AND ATTEND AN EVENT OPTION !!
+
+
 
 module.exports = router

@@ -2,19 +2,41 @@ const mongoose = require("mongoose")
 // const { User } = require("./User");
 
 const eventSchema = new mongoose.Schema({
-  sessionId:String, // _id: String, //add this using uuidv4  -  https://www.npmjs.com/package/uuidv4
+  _id:String, // _id: String, //add this using uuidv4  -  https://www.npmjs.com/package/uuidv4
   category:String,// category means like whether it is a legal camp or what !!
   eventName:String,
   eventLocation:String,
-  feedback: [
+  feedback: {
+    type:[
     {
-      uid: mongoose.Types.ObjectId,
+      uid: String,
       content: String,
-    },
-  ],
-  registered:[{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
-  attended: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
-  followedUp:[{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    }],
+    default:[]
+  },
+  //  mongoose.Schema.Types.ObjectId : this is not used bcz : 
+  // we are using non standard technique to generate id !! 
+
+  // ref :user is creating some index errors / uniqueness errors !! 
+  attended:{
+    type:[{ type: String}],
+    default:[]
+  },
+  registered:{
+    type:[{ type: String}],
+    default:[]
+  },
+  followedUp:{
+    type:[{ type: String}],
+    default:[]
+  },
+  eventStartTime: Date,
+  eventDuration:Number,
+  eventDetails:String,
+  imageUrl:{
+    type:String,
+    default:'https://www.guidestar.org/ViewEdoc.aspx?eDocId=7940646&approved=True'
+  }
 })
 // progress ? checklist ? how to maintain ?
 // TODO: add fields for adding event description, event images?, 

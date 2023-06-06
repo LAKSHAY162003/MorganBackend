@@ -13,100 +13,105 @@ const Event=require("../models/events");
 
 // registeration done by the userItself !! it is that route 
 router.post("/register/byUser", (req, res) => {
-  const {
-    pwd,
-    basicDetails: {
-      name,
-      age,
-      gender,
-      PhoneNumber,
-      address: { address1, state, city, zip },
-      Community,
-      familyDetails: { numOfChild, maritalStatus, income, dependents },
-      primaryLanguage
-    },
-    educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
-    employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
-    SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
-    medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
-    govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
-  } = req.body;
-
-  const _id = uuidv4();
+  try{
+    const {
+      pwd,
+      basicDetails: {
+        name,
+        age,
+        gender,
+        PhoneNumber,
+        address: { address1, state, city, zip },
+        Community,
+        familyDetails: { numOfChild, maritalStatus, income, dependents },
+        primaryLanguage
+      },
+      educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
+      employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
+      SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
+      medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
+      govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
+    } = req.body;
   
-  const saltRounds = 10;
-      bcrypt.hash(pwd, saltRounds, function(err, hash){
-                const currentUser =new User({
-            pwd:hash,
-            _id,
-            basicDetails: {
-              name,
-              age,
-              gender,
-              PhoneNumber,
-              address: {
-                address1,
-                state,
-                city,
-                zip
+    const _id = uuidv4();
+    
+    const saltRounds = 10;
+        bcrypt.hash(pwd, saltRounds, function(err, hash){
+                  const currentUser =new User({
+              pwd:hash,
+              _id,
+              basicDetails: {
+                name,
+                age,
+                gender,
+                PhoneNumber,
+                address: {
+                  address1,
+                  state,
+                  city,
+                  zip
+                },
+                Community,
+                familyDetails: {
+                  numOfChild,
+                  maritalStatus,
+                  income,
+                  dependents
+                },
+                primaryLanguage
               },
-              Community,
-              familyDetails: {
-                numOfChild,
-                maritalStatus,
-                income,
-                dependents
+              educationStatus: {
+                currentEducationLevel,
+                ongoingEducation,
+                furtherStudyInterest
               },
-              primaryLanguage
-            },
-            educationStatus: {
-              currentEducationLevel,
-              ongoingEducation,
-              furtherStudyInterest
-            },
-            employmentStatus: {
-              currentEmployment,
-              workNature,
-              workIndustry,
-              prevEmployment,
-              openForEmployment
-            },
-            SocioeconomicStatus: {
-              cleanWaterAccess,
-              electricityAccess,
-              housingType,
-              transportationAccess
-            },
-            medicalRecords: {
-              hospitalizationRecords,
-              chronicIllnesses,
-              currentMedications,
-              bloodGroup,
-              allergies,
-              vaccinationRecords,
-              healthInsurance
-            },
-            govtSchemes: {
-              rationCard,
-              aadharCard,
-              esharamCard,
-              panCard,
-              voterId
-            }
-          });
-
-          User.insertMany([currentUser], function (err) {
-            if (err) {
-              res.status(500).json({ message: err.message })
-            } else {
-              const user={_id:_id,role:"User"}; 
-              const accessToken=jwt.sign(user,process.env.SECRET_KEY);
-              res.status(200).json({accessToken:accessToken});
-            }
-          })
-
-      });
-
+              employmentStatus: {
+                currentEmployment,
+                workNature,
+                workIndustry,
+                prevEmployment,
+                openForEmployment
+              },
+              SocioeconomicStatus: {
+                cleanWaterAccess,
+                electricityAccess,
+                housingType,
+                transportationAccess
+              },
+              medicalRecords: {
+                hospitalizationRecords,
+                chronicIllnesses,
+                currentMedications,
+                bloodGroup,
+                allergies,
+                vaccinationRecords,
+                healthInsurance
+              },
+              govtSchemes: {
+                rationCard,
+                aadharCard,
+                esharamCard,
+                panCard,
+                voterId
+              }
+            });
+  
+            User.insertMany([currentUser], function (err) {
+              if (err) {
+                res.status(500).json({ message: err.message })
+              } else {
+                const user={_id:_id,role:"User"}; 
+                const accessToken=jwt.sign(user,process.env.SECRET_KEY);
+                res.status(200).json({accessToken:accessToken});
+              }
+            })
+  
+        });
+  }
+  catch(err){
+    console.error(error);
+    res.status(500).json({ message: 'Error occurred while saving data.' });
+  }
 })
 
 // registeration done by admin !! it is that route 

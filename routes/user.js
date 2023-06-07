@@ -393,7 +393,9 @@ router.get("/filter/age",authorizeAdmin,async (req, res) => {
 // filter user by name 
 router.get("/filter/name",authorizeAdmin,async (req, res) => {
   try {
-    const name = req.body.name;
+    // const name = req.query.name;
+    const name = new RegExp(`^${req.query.name}`, 'i'); // Case-insensitive regex to match the name prefix
+
     const result = await User.find({ "basicDetails.name": name })
       // UserDetails
     if (result.length > 0) {

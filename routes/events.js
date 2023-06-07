@@ -38,7 +38,7 @@ router.post("/markAttendance",authorizeAdmin,async (req,res)=>{
       try{
             let eventId=req.body.eventId;
             const userId=req.body.userId;
-
+            console.log(eventId);
             const event = await Event.findById(eventId);
             if (!event.attended.includes(userId)) {
               event.attended.push(userId);
@@ -49,6 +49,7 @@ router.post("/markAttendance",authorizeAdmin,async (req,res)=>{
             res.status(200).json({message:"Success !!"});
       }
       catch(err){
+          console.log(err.message);
           res.status(500).json({message:err.message});
       }
 });
@@ -58,7 +59,7 @@ router.post("/markAttendance",authorizeAdmin,async (req,res)=>{
 
 // get all events
 // to get all events !! 
-router.get("/",authorizeAdmin,async (req,res)=>{
+router.get("/",async (req,res)=>{
   try{
     const result=await Event.find();
     if(result.length>0){
@@ -104,7 +105,7 @@ router.get("/attendance",authorizeAdmin, async (req, res) => {
 // getting registerList based on sessionId
 router.get("/registeredList",authorizeAdmin, async (req, res) => {
   try {
-    let eventId = req.body.eventId // accessing the request parameters !!
+    let eventId = req.query.eventId // accessing the request parameters !!
 
     Event.findById(eventId) // Replace `eventId` with the actual event ID
   .exec(async (err, result) => {

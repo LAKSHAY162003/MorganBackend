@@ -115,202 +115,96 @@ router.post("/register/admin", (req, res) => {
 
 // registeration done by the userItself !! it is that route 
 router.post("/register/byUser", (req, res) => {
-  try{
-    const {
-      pwd,
-      basicDetails: {
-        name,
-        age,
-        gender,
-        PhoneNumber,
-        address: { address1, state, city, zip },
-        Community,
-        familyDetails: { numOfChild, maritalStatus, income, dependents },
-        primaryLanguage
-      },
-      educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
-      employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
-      SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
-      medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
-      govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
-    } = req.body;
+  const { pwd, basicDetails, ...rest } = req.body;
   
-    const _id = uuidv4();
-    
-    const saltRounds = 10;
-        bcrypt.hash(pwd, saltRounds, function(err, hash){
-                  const currentUser =new User({
-              pwd:hash,
-              _id,
-              basicDetails: {
-                name,
-                age,
-                gender,
-                PhoneNumber,
-                address: {
-                  address1,
-                  state,
-                  city,
-                  zip
-                },
-                Community,
-                familyDetails: {
-                  numOfChild,
-                  maritalStatus,
-                  income,
-                  dependents
-                },
-                primaryLanguage
-              },
-              educationStatus: {
-                currentEducationLevel,
-                ongoingEducation,
-                furtherStudyInterest
-              },
-              employmentStatus: {
-                currentEmployment,
-                workNature,
-                workIndustry,
-                prevEmployment,
-                openForEmployment
-              },
-              SocioeconomicStatus: {
-                cleanWaterAccess,
-                electricityAccess,
-                housingType,
-                transportationAccess
-              },
-              medicalRecords: {
-                hospitalizationRecords,
-                chronicIllnesses,
-                currentMedications,
-                bloodGroup,
-                allergies,
-                vaccinationRecords,
-                healthInsurance
-              },
-              govtSchemes: {
-                rationCard,
-                aadharCard,
-                esharamCard,
-                panCard,
-                voterId
-              }
-            });
-  
-            User.insertMany([currentUser], function (err) {
-              if (err) {
-                res.status(500).json({ message: err.message })
-              } else {
-                const user={_id:_id,role:"User"}; 
-                const accessToken=jwt.sign(user,process.env.SECRET_KEY);
-                res.status(200).json({accessToken:accessToken});
-              }
-            })
-  
-        });
+  if (!basicDetails) {
+    return res.status(400).json({ message: 'Basic details are required.' });
   }
-  catch(err){
-    console.error(error);
-    res.status(500).json({ message: 'Error occurred while saving data.' });
-  }
-})
 
-// registeration done by admin !! it is that route 
-router.post("/register/byAdmin",authorizeAdmin,(req, res) => {
-  const {
-    pwd,
-    basicDetails: {
-      name,
-      age,
-      gender,
-      PhoneNumber,
-      address: { address1, state, city, zip },
-      Community,
-      familyDetails: { numOfChild, maritalStatus, income, dependents },
-      primaryLanguage
-    },
-    educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
-    employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
-    SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
-    medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
-    govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
-  } = req.body;
+  const { PhoneNumber, name, gender, Community } = basicDetails;
+
+  if (!pwd || !PhoneNumber || !name || !gender || !Community) {
+    return res.status(400).json({ message: 'Password, phone number, name, gender, and community are required.' });
+  }
 
   const _id = uuidv4();
-  
   const saltRounds = 10;
-      bcrypt.hash(pwd, saltRounds, function(err, hash){
-                const currentUser =new User({
-            pwd:hash,
-            _id,
-            basicDetails: {
-              name,
-              age,
-              gender,
-              PhoneNumber,
-              address: {
-                address1,
-                state,
-                city,
-                zip
-              },
-              Community,
-              familyDetails: {
-                numOfChild,
-                maritalStatus,
-                income,
-                dependents
-              },
-              primaryLanguage
-            },
-            educationStatus: {
-              currentEducationLevel,
-              ongoingEducation,
-              furtherStudyInterest
-            },
-            employmentStatus: {
-              currentEmployment,
-              workNature,
-              workIndustry,
-              prevEmployment,
-              openForEmployment
-            },
-            SocioeconomicStatus: {
-              cleanWaterAccess,
-              electricityAccess,
-              housingType,
-              transportationAccess
-            },
-            medicalRecords: {
-              hospitalizationRecords,
-              chronicIllnesses,
-              currentMedications,
-              bloodGroup,
-              allergies,
-              vaccinationRecords,
-              healthInsurance
-            },
-            govtSchemes: {
-              rationCard,
-              aadharCard,
-              esharamCard,
-              panCard,
-              voterId
-            }
-          });
 
-          User.insertMany([currentUser], function (err) {
-            if (err) {
-              res.status(500).json({ message: err.message })
-            } else {
-              res.status(200).json({message:"Success"});
-            }
-          })
-
+  bcrypt.hash(pwd, saltRounds, function(err, hash){
+    if (err) {
+      return res.status(500).json({ message: err.message });
+    } else {
+      const currentUser = new User({
+        pwd: hash,
+        _id,
+        basicDetails: {
+          PhoneNumber,
+          name,
+          gender,
+          Community,
+          ...basicDetails
+        },
+        ...rest
       });
 
-})
+      User.insertMany([currentUser], function (err) {
+        if (err) {
+          return res.status(500).json({ message: err.message });
+        } else {
+          const user = { _id: _id, role: "User" };
+          const accessToken = jwt.sign(user, process.env.SECRET_KEY);
+          return res.status(200).json({ accessToken: accessToken });
+        }
+      });
+    }
+  });
+});
+
+// registeration done by admin !! it is that route 
+router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
+  const { pwd, basicDetails, ...rest } = req.body;
+  
+  if (!basicDetails) {
+    return res.status(400).json({ message: 'Basic details are required.' });
+  }
+
+  const { PhoneNumber, name, gender, Community } = basicDetails;
+
+  if (!pwd || !PhoneNumber || !name || !gender || !Community) {
+    return res.status(400).json({ message: 'Password, phone number, name, gender, and community are required.' });
+  }
+
+  const _id = uuidv4();
+  const saltRounds = 10;
+
+  bcrypt.hash(pwd, saltRounds, function(err, hash){
+    if (err) {
+      return res.status(500).json({ message: err.message });
+    } else {
+      const currentUser = new User({
+        pwd: hash,
+        _id,
+        basicDetails: {
+          PhoneNumber,
+          name,
+          gender,
+          Community,
+          ...basicDetails
+        },
+        ...rest
+      });
+
+      User.insertMany([currentUser], function (err) {
+        if (err) {
+          return res.status(500).json({ message: err.message });
+        } else {
+          return res.status(200).json({message:"Success"});
+        }
+      });
+    }
+  });
+});
+
 
 // login route !! { WE HAVE TAKEN CARE OF THE FACT THAT MULTIPLE 
 // PEOPLE CAN HAVE SAME NAME BUT PWD WILL BE UNIQUE }

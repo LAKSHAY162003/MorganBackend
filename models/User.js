@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 // new Schema({...data})
 const UserSchema = new mongoose.Schema({
   pwd:{type:String, unique: true},
+  role:String,
   _id: String, //add this using uuidv4  -  https://www.npmjs.com/package/uuidv4
   basicDetails: {
     name: String,

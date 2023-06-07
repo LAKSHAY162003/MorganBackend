@@ -38,6 +38,7 @@ router.post("/register/admin", (req, res) => {
         bcrypt.hash(pwd, saltRounds, function(err, hash){
                   const currentUser =new User({
               pwd:hash,
+              role:"Admin",
               _id,
               basicDetails: {
                 name,
@@ -99,7 +100,7 @@ router.post("/register/admin", (req, res) => {
               if (err) {
                 res.status(500).json({ message: err.message })
               } else {
-                const user={_id:_id,role:"User"}; 
+                const user={_id:_id,role:"Admin"}; 
                 const accessToken=jwt.sign(user,process.env.SECRET_KEY);
                 res.status(200).json({accessToken:accessToken});
               }
@@ -136,6 +137,7 @@ router.post("/register/byUser", (req, res) => {
     } else {
       const currentUser = new User({
         pwd: hash,
+        role:"User",
         _id,
         basicDetails: {
           PhoneNumber,
@@ -183,6 +185,7 @@ router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
     } else {
       const currentUser = new User({
         pwd: hash,
+        role:"User",
         _id,
         basicDetails: {
           PhoneNumber,

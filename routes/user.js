@@ -2,7 +2,6 @@
 require("dotenv").config();
 const express = require("express")
 const router = express.Router()
-const { v4: uuidv4 } = require('uuid');
 const User=require("../models/User");
 const jwt=require("jsonwebtoken");
 const bcrypt=require("bcryptjs");
@@ -10,108 +9,6 @@ const authorizeUser=require("../middleware/userAuth");
 const authorizeAdmin=require("../middleware/adminAuth");
 const Event=require("../models/events");
 
-
-router.post("/register/admin", (req, res) => {
-  try{
-    const {
-      pwd,
-      basicDetails: {
-        name,
-        age,
-        gender,
-        PhoneNumber,
-        address: { address1, state, city, zip },
-        Community,
-        familyDetails: { numOfChild, maritalStatus, income, dependents },
-        primaryLanguage
-      },
-      educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
-      employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
-      SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
-      medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
-      govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
-    } = req.body;
-  
-    const _id = uuidv4();
-    
-    const saltRounds = 10;
-        bcrypt.hash(pwd, saltRounds, function(err, hash){
-                  const currentUser =new User({
-              pwd:hash,
-              _id,
-              basicDetails: {
-                name,
-                age,
-                gender,
-                PhoneNumber,
-                address: {
-                  address1,
-                  state,
-                  city,
-                  zip
-                },
-                Community,
-                familyDetails: {
-                  numOfChild,
-                  maritalStatus,
-                  income,
-                  dependents
-                },
-                primaryLanguage
-              },
-              educationStatus: {
-                currentEducationLevel,
-                ongoingEducation,
-                furtherStudyInterest
-              },
-              employmentStatus: {
-                currentEmployment,
-                workNature,
-                workIndustry,
-                prevEmployment,
-                openForEmployment
-              },
-              SocioeconomicStatus: {
-                cleanWaterAccess,
-                electricityAccess,
-                housingType,
-                transportationAccess
-              },
-              medicalRecords: {
-                hospitalizationRecords,
-                chronicIllnesses,
-                currentMedications,
-                bloodGroup,
-                allergies,
-                vaccinationRecords,
-                healthInsurance
-              },
-              govtSchemes: {
-                rationCard,
-                aadharCard,
-                esharamCard,
-                panCard,
-                voterId
-              }
-            });
-  
-            User.insertMany([currentUser], function (err) {
-              if (err) {
-                res.status(500).json({ message: err.message })
-              } else {
-                const user={_id:_id,role:"User"}; 
-                const accessToken=jwt.sign(user,process.env.SECRET_KEY);
-                res.status(200).json({accessToken:accessToken});
-              }
-            })
-  
-        });
-  }
-  catch(err){
-    console.error(error);
-    res.status(500).json({ message: 'Error occurred while saving data.' });
-  }
-})
 
 // registeration done by the userItself !! it is that route 
 router.post("/register/byUser", (req, res) => {
@@ -126,8 +23,6 @@ router.post("/register/byUser", (req, res) => {
   if (!pwd || !PhoneNumber || !name || !gender || !Community) {
     return res.status(400).json({ message: 'Password, phone number, name, gender, and community are required.' });
   }
-
-  const _id = uuidv4();
   const saltRounds = 10;
 
   bcrypt.hash(pwd, saltRounds, function(err, hash){
@@ -135,8 +30,8 @@ router.post("/register/byUser", (req, res) => {
       return res.status(500).json({ message: err.message });
     } else {
       const currentUser = new User({
+        role:"User",
         pwd: hash,
-        _id,
         basicDetails: {
           PhoneNumber,
           name,
@@ -151,7 +46,7 @@ router.post("/register/byUser", (req, res) => {
         if (err) {
           return res.status(500).json({ message: err.message });
         } else {
-          const user = { _id: _id, role: "User" };
+          const user = { _id: currentUser._id, role: "User" };
           const accessToken = jwt.sign(user, process.env.SECRET_KEY);
           return res.status(200).json({ accessToken: accessToken });
         }
@@ -173,8 +68,6 @@ router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
   if (!pwd || !PhoneNumber || !name || !gender || !Community) {
     return res.status(400).json({ message: 'Password, phone number, name, gender, and community are required.' });
   }
-
-  const _id = uuidv4();
   const saltRounds = 10;
 
   bcrypt.hash(pwd, saltRounds, function(err, hash){
@@ -183,7 +76,7 @@ router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
     } else {
       const currentUser = new User({
         pwd: hash,
-        _id,
+        role:"User",
         basicDetails: {
           PhoneNumber,
           name,
@@ -511,7 +404,6 @@ router.put("/userUpdates",authorizeUser,async(req,res)=>{
 
         const updatedUser = {
           pwd,
-          _id,
           basicDetails: {
             name,
             age,

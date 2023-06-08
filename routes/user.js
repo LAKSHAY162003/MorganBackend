@@ -8,6 +8,7 @@ const bcrypt=require("bcryptjs");
 const authorizeUser=require("../middleware/userAuth");
 const authorizeAdmin=require("../middleware/adminAuth");
 const Event=require("../models/events");
+const { v4: uuidv4 } = require('uuid');
 
 // use same as registeration done by the userItself !! it is that route
 
@@ -239,6 +240,31 @@ router.post("/login", async (req, res) => {
 });
 
 
+router.post("/addCommunity", async (req, res) => {
+  const { Community } = req.body;
+  const pwd ="DoesNotExist"+uuidv4();
+  try {
+    const currUser = new User({
+      // Other user properties
+      pwd,
+      basicDetails: {
+        // Other basic details properties
+        Community:Community,
+      },
+    });
+    
+    User.insertMany([currUser], function (err) {
+      if (err) {
+        return res.status(500).json({ message: err.message });
+      } else {
+        return res.status(200).json({message:"Success"});
+      }
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 
 
@@ -406,10 +432,11 @@ const processData = (users) => {
 // group by community 
 router.get("/group/community",authorizeAdmin,async (req, res) => {
   try {
-    const users = await User.find()
+    const users = await User.find();
     if (users.length > 0) {
       // console.log(users);
-      const result = processData2(users)
+      const result =processData2(users)
+      console.log(result);
       res.status(200).json({ result: result })
       // using the result property of the json object returned we can
       // have that object send as prop to the component of chart.js
@@ -421,20 +448,27 @@ router.get("/group/community",authorizeAdmin,async (req, res) => {
   }
 })
 
-const processData2 = (users) => {
+const processData2 =(users) => {
   const communityGroups = {}
-
+  const regexPattern = /^DoesNotExist/;
   // Categorize users by age
   users.forEach((user) => {
     const community = user.basicDetails.Community
-
-    // Check if the age group exists, if not create it
-    if (!communityGroups[community]) {
-      communityGroups[community] = []
+    if(regexPattern.test(user.pwd)){
+      console.log("Hello");
+      if (!communityGroups[community]) {
+        communityGroups[community] = []
+      }
     }
+    else{
+        // Check if the age group exists, if not create it
+        if (!communityGroups[community]) {
+          communityGroups[community] = []
+        }
 
-    // Add the user to the respective age group
-    communityGroups[community].push(user)
+        // Add the user to the respective age group
+        communityGroups[community].push(user)
+        }
   })
 
   // console.log(ageGroups);

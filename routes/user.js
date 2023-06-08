@@ -9,8 +9,113 @@ const authorizeUser=require("../middleware/userAuth");
 const authorizeAdmin=require("../middleware/adminAuth");
 const Event=require("../models/events");
 
+// use same as registeration done by the userItself !! it is that route
+
+// router.post("/register/admin", (req, res) => {
+//   try{
+//     const {
+//       pwd,
+//       basicDetails: {
+//         name,
+//         age,
+//         gender,
+//         PhoneNumber,
+//         address: { address1, state, city, zip },
+//         Community,
+//         familyDetails: { numOfChild, maritalStatus, income, dependents },
+//         primaryLanguage
+//       },
+//       educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
+//       employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
+//       SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
+//       medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
+//       govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
+//     } = req.body;
+  
+//     const _id = uuidv4();
+    
+//     const saltRounds = 10;
+//         bcrypt.hash(pwd, saltRounds, function(err, hash){
+//                   const currentUser =new User({
+//               pwd:hash,
+//               role:"Admin",
+//               _id,
+//               basicDetails: {
+//                 name,
+//                 age,
+//                 gender,
+//                 PhoneNumber,
+//                 address: {
+//                   address1,
+//                   state,
+//                   city,
+//                   zip
+//                 },
+//                 Community,
+//                 familyDetails: {
+//                   numOfChild,
+//                   maritalStatus,
+//                   income,
+//                   dependents
+//                 },
+//                 primaryLanguage
+//               },
+//               educationStatus: {
+//                 currentEducationLevel,
+//                 ongoingEducation,
+//                 furtherStudyInterest
+//               },
+//               employmentStatus: {
+//                 currentEmployment,
+//                 workNature,
+//                 workIndustry,
+//                 prevEmployment,
+//                 openForEmployment
+//               },
+//               SocioeconomicStatus: {
+//                 cleanWaterAccess,
+//                 electricityAccess,
+//                 housingType,
+//                 transportationAccess
+//               },
+//               medicalRecords: {
+//                 hospitalizationRecords,
+//                 chronicIllnesses,
+//                 currentMedications,
+//                 bloodGroup,
+//                 allergies,
+//                 vaccinationRecords,
+//                 healthInsurance
+//               },
+//               govtSchemes: {
+//                 rationCard,
+//                 aadharCard,
+//                 esharamCard,
+//                 panCard,
+//                 voterId
+//               }
+//             });
+  
+//             User.insertMany([currentUser], function (err) {
+//               if (err) {
+//                 res.status(500).json({ message: err.message })
+//               } else {
+//                 const user={_id:_id,role:"Admin"}; 
+//                 const accessToken=jwt.sign(user,process.env.SECRET_KEY);
+//                 res.status(200).json({accessToken:accessToken});
+//               }
+//             })
+  
+//         });
+//   }
+//   catch(err){
+//     console.error(error);
+//     res.status(500).json({ message: 'Error occurred while saving data.' });
+//   }
+// })
 
 // registeration done by the userItself !! it is that route 
+
 router.post("/register/byUser", (req, res) => {
   const { pwd, basicDetails, ...rest } = req.body;
   
@@ -32,6 +137,8 @@ router.post("/register/byUser", (req, res) => {
       const currentUser = new User({
         role:"User",
         pwd: hash,
+        role:"User",
+        _id,
         basicDetails: {
           PhoneNumber,
           name,
@@ -55,7 +162,7 @@ router.post("/register/byUser", (req, res) => {
   });
 });
 
-// registeration done by admin !! it is that route 
+// registeration done by admin !! it is that route    , or just use the user registeration route and change the role to admin??
 router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
   const { pwd, basicDetails, ...rest } = req.body;
   
@@ -77,6 +184,7 @@ router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
       const currentUser = new User({
         pwd: hash,
         role:"User",
+        _id,
         basicDetails: {
           PhoneNumber,
           name,
@@ -99,12 +207,13 @@ router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
 });
 
 
-// login route !! { WE HAVE TAKEN CARE OF THE FACT THAT MULTIPLE 
-// PEOPLE CAN HAVE SAME NAME BUT PWD WILL BE UNIQUE }
+// login route !!
+// Sign in by Phone Number and Password
 router.post("/login", async (req, res) => {
-  const { name, pwd } = req.body;
+  const { PhoneNumber, pwd } = req.body;
+  console.log(PhoneNumber, pwd);
   try {
-    const results = await User.find({ 'basicDetails.name': name });
+    const results = await User.find({ 'basicDetails.PhoneNumber': PhoneNumber });
 
     if (results.length === 0) {
       return res.status(500).json({ message: "NO ENTRY FOUND !!!" });
@@ -128,6 +237,8 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+
 
 
 
@@ -373,71 +484,55 @@ const processData4 = (users) => {
 
 
 // user Side updating the info !! { he should be only updating it !! }
-router.put("/userUpdates",authorizeUser,async(req,res)=>{
-    try{
-        // so basically authorizedUser means : he can do the change !! 
-      const {
-      basicDetails: {
-        name,
-        age,
-        gender,
-        PhoneNumber,
-        address: { address1, state, city, zip },
-        Community,
-        familyDetails: { numOfChild, maritalStatus, income, dependents },
-        primaryLanguage
-      },
-      educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
-      employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
-      SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
-      medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
-      govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
-      } = req.body;
-
-    // pwd cant be sent over frontend to usko change nahi kar sakte !! 
-      const _id =req.user._id; // Extracting userId from json web token
-      // so basically find based on the id !! and update !! 
-
-      const result=await User.find({_id:_id});
-      if(result.length>0){
-        const pwd=result.pwd;
-
-        const updatedUser = {
-          pwd,
-          basicDetails: {
-            name,
-            age,
-            gender,
-            PhoneNumber,
-            address: { address1, state, city, zip },
-            Community,
-            familyDetails: { numOfChild, maritalStatus, income, dependents },
-            primaryLanguage
-          },
-          educationStatus: { currentEducationLevel, ongoingEducation, furtherStudyInterest },
-          employmentStatus: { currentEmployment, workNature, workIndustry, prevEmployment, openForEmployment },
-          SocioeconomicStatus: { cleanWaterAccess, electricityAccess, housingType, transportationAccess },
-          medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
-          govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
-        };
-
-        User.findOneAndUpdate({ _id: _id }, updatedUser, { new: true }, (err, updatedUser) => {
-          if (err) {
-            res.status(500).json({message:err.message});
-          } else {
-            res.status(200).json({ message: "User updated successfully", user: updatedUser });
+//added partial update support, coz my user update page sends data in parts and not the whole object
+router.put("/userUpdates", authorizeUser, async (req, res) => {
+  try {
+      const _id = req.user._id; // Extracting userId from json web token
+      const result = await User.findOne({ _id: _id });
+      
+      if (result) {
+          let update = {};
+          for(let key in req.body) {
+              if(req.body[key] instanceof Object && !Array.isArray(req.body[key])) {
+                  for(let subKey in req.body[key]) {
+                      update[`${key}.${subKey}`] = req.body[key][subKey];
+                  }
+              } else {
+                  update[key] = req.body[key];
+              }
           }
-        });
 
+          User.findByIdAndUpdate({ _id: _id }, { $set: update }, { new: true }, (err, updatedUser) => {
+              if (err) {
+                  res.status(500).json({ message: err.message });
+              } else {
+                  res.status(200).json({ message: "User updated successfully", user: updatedUser });
+              }
+          });
+      } else {
+          res.status(500).json({ message: "No Such User Exist" });
       }
-      else{
-        res.status(500).json({message:"No Such User Exist"});
-      }
-    }
-    catch(err){
-      res.status(500).json({message:err.message});
-    } 
+  } catch (err) {
+      res.status(500).json({ message: err.message });
+  }
+});
 
+//get user details by id  , 
+router.get("/user/:id", authorizeUser, async (req, res) => {
+  try {
+      const _id = req.params.id;  // Extracting userId from request params
+
+      // Find user based on the id
+      const user = await User.findById(_id);
+      
+      if (user) {
+          res.status(200).json(user);
+      } else {
+          res.status(404).json({ message: "User not found" });
+      }
+  } catch (err) {
+      res.status(500).json({ message: err.message });
+  }
 });
 
 

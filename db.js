@@ -11,3 +11,5 @@ module.exports.connect = () =>
       resolve()
     })
   })
+
+module.exports.disconnect = mongoose.disconnect

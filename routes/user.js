@@ -608,6 +608,26 @@ router.get("/getRegisteredEvents",authorizeUser,(req,res)=>{
 
 });
 
+// get all the events in which he/she has Registred !! without authorization
+router.get("/getUsersRegisteredEvents/:id", (req, res) => {
+  const userId = req.params.id;
+
+  // Check if userId is provided
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" });
+  }
+
+  // getAllEvents where registered.includes(userId) is false
+  Event.find({ registered: { $in: [userId] }, attended: { $nin: [userId] } })
+    .exec((err, events) => {
+      if (err) {
+        res.status(500).json({ message: err.message });
+      } else {
+        res.status(200).json(events);
+      }
+    });
+});
+
 
 
 // now : REGISTER , ATTEND , FOLLOW UP AND FEEDBACK AN EVENT OPTION !!
@@ -674,6 +694,53 @@ router.post("/attendEvent",authorizeUser,async(req,res)=>{
     res.status(500).json({message:err.message});
   }
 })
+
+
+//for user side attend an event , won't affect anything
+router.post("/attendAnEvent", async (req, res) => {
+  try {
+    const { eventId, userId } = req.body;
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found.' });
+    }
+
+    if (!event.attended.includes(userId)) {
+      event.attended.push(userId);
+    } else {
+      return res.status(500).json({ message: "User is already registered for this event." });
+    }
+
+    await event.save();
+    res.status(200).json({ message: "Success !!" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+//list of all the events in which user has attended
+router.get("/getUsersAttendedEvents/:id", (req, res) => {
+  const userId = req.params.id;
+
+  // Check if userId is provided
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" });
+  }
+
+  // getAllEvents where registered.includes(userId) and attended.includes(userId)
+  Event.find({ registered: { $in: [userId] }, attended: { $in: [userId] } })
+    .exec((err, events) => {
+      if (err) {
+        res.status(500).json({ message: err.message });
+      } else {
+        res.status(200).json(events);
+      }
+    });
+});
+
+
+
 
 router.post("/followUpForEvent",authorizeUser,async(req,res)=>{
   try{

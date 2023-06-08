@@ -489,9 +489,11 @@ const processData4 = (users) => {
 
 // user Side updating the info !! { he should be only updating it !! }
 //added partial update support, coz my user update page sends data in parts and not the whole object
-router.put("/userUpdates", authorizeUser, async (req, res) => {
+// diabled authentication for now: authorizeUser,  please add it later
+router.put("/userUpdates/:id", async (req, res) => {
   try {
-      const _id = req.user._id; // Extracting userId from json web token
+      const _id = req.params.id; // Extracting userId from the route parameter
+      
       const result = await User.findOne({ _id: _id });
       
       if (result) {
@@ -521,8 +523,9 @@ router.put("/userUpdates", authorizeUser, async (req, res) => {
   }
 });
 
+
 //get user details by id  , 
-router.get("/user/:id", authorizeUser, async (req, res) => {
+router.get("/user/:id",  async (req, res) => {
   try {
       const _id = req.params.id;  // Extracting userId from request params
 

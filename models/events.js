@@ -35,7 +35,7 @@ const eventSchema = new mongoose.Schema({
   eventDetails:String,
   imageUrl:{
     type:String,
-    default:'https://www.guidestar.org/ViewEdoc.aspx?eDocId=7940646&approved=True'
+    default:'https://tinymiracles.com/wp-content/uploads/2019/07/logos_tm1-black-tag.png'
   }
 })
 // progress ? checklist ? how to maintain ?

@@ -602,6 +602,31 @@ router.post("/registerForEvent",authorizeUser,async(req,res)=>{
 })
 
 
+//register for an event (user side)
+router.post("/registerForAnEvent", async (req, res) => {
+  try {
+    const { eventId, userId } = req.body;
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found.' });
+    }
+
+    if (!event.registered.includes(userId)) {
+      event.registered.push(userId);
+    } else {
+      return res.status(500).json({ message: "repeat" });
+    }
+
+    await event.save();
+    res.status(200).json({ message: "Success !!" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+
 router.post("/attendEvent",authorizeUser,async(req,res)=>{
   try{
     let eventId=req.body.eventId;

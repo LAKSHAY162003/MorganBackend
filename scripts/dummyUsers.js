@@ -118,6 +118,27 @@ const createUser = () => {
       ]),
       allergies: randomElement(["Yes", "No"]),
       healthInsurance: randomElement(["Yes", "No"]),
+      chronicIllnesses: randomElement([
+        "Diabetes",
+        "Diabetes",
+        "Diabetes",
+        "Diabetes",
+        "Diabetes",
+        "Diabetes",
+        "Cancer",
+        "Arthritis",
+        "Arthritis",
+        "Arthritis",
+        "Arthritis",
+        "Arthritis",
+        "Stroke",
+        "Stroke",
+        "Stroke",
+        "Asthma",
+        "Asthma",
+        "Asthma",
+        "Asthma",
+      ]),
     },
     SocioeconomicStatus: {
       cleanWaterAccess: randomElement(["Yes", "No"]),
@@ -150,5 +171,3 @@ db.connect().then(async () => {
 
   db.disconnect()
 })
-
-

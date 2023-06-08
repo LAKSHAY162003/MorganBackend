@@ -485,9 +485,11 @@ const processData4 = (users) => {
 
 // user Side updating the info !! { he should be only updating it !! }
 //added partial update support, coz my user update page sends data in parts and not the whole object
-router.put("/userUpdates", authorizeUser, async (req, res) => {
+// diabled authentication for now: authorizeUser,  please add it later
+router.put("/userUpdates/:id", async (req, res) => {
   try {
-      const _id = req.user._id; // Extracting userId from json web token
+      const _id = req.params.id; // Extracting userId from the route parameter
+      
       const result = await User.findOne({ _id: _id });
       
       if (result) {
@@ -517,8 +519,9 @@ router.put("/userUpdates", authorizeUser, async (req, res) => {
   }
 });
 
+
 //get user details by id  , 
-router.get("/user/:id", authorizeUser, async (req, res) => {
+router.get("/user/:id",  async (req, res) => {
   try {
       const _id = req.params.id;  // Extracting userId from request params
 
@@ -593,6 +596,31 @@ router.post("/registerForEvent",authorizeUser,async(req,res)=>{
     res.status(500).json({message:err.message});
   }
 })
+
+
+//register for an event (user side)
+router.post("/registerForAnEvent", async (req, res) => {
+  try {
+    const { eventId, userId } = req.body;
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found.' });
+    }
+
+    if (!event.registered.includes(userId)) {
+      event.registered.push(userId);
+    } else {
+      return res.status(500).json({ message: "repeat" });
+    }
+
+    await event.save();
+    res.status(200).json({ message: "Success !!" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 
 router.post("/attendEvent",authorizeUser,async(req,res)=>{

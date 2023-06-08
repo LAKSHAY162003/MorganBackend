@@ -74,6 +74,41 @@ router.get("/",async (req,res)=>{
   }
 })
 
+// get all events , in objects format !! added by vaibhav for events list and event page
+router.get("/list", async (req, res) => {
+  try {
+    const result = await Event.find();
+
+    if (result.length > 0) {
+      res.status(200).json(result);
+    } else {
+      res.status(200).json([]);
+    }
+  }
+  catch(err){
+    res.status(500).json({message: err.message});
+  }
+});
+
+// get a specific event by its id
+router.get("/list/:id", async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+
+    if (event) {
+      res.status(200).json(event);
+    } else {
+      res.status(404).json({message: "Event not found"});
+    }
+  }
+  catch(err){
+    res.status(500).json({message: err.message});
+  }
+});
+
+
+
+
 
 // getting attendance based on sessionId !!
 router.get("/attendance",authorizeAdmin, async (req, res) => {

@@ -17,16 +17,15 @@ const lastNames = fs
   .trim()
   .split("\n")
 
-const randomElement = (...arr) => {
-  arr = arr.flat()
+const randomElement = (arr) => {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
 const randomElementRatio = (...arr) => {
   const expandedArr = arr
-    .map(([elem,freq]) => Array(freq ?? 1).fill(elem))
+    .map(([elem, freq]) => Array(freq ?? 1).fill(elem))
     .flat()
-    return randomElement(expandedArr)
+  return randomElement(expandedArr)
 }
 
 const randomString = (length = 8, space = "qwertyuopasdfghjklzxcvbnm") => {
@@ -39,7 +38,10 @@ const randomString = (length = 8, space = "qwertyuopasdfghjklzxcvbnm") => {
 const createUser = () => {
   return {
     _id: crypto.randomUUID(),
-    pwd: bcrypt.hashSync(randomString(), 10),
+    pwd: `$2a$10$${randomString(
+      53,
+      "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm01234567890+/"
+    )}`,
     role: "User",
     basicDetails: {
       name: `${randomElement(firstNames)} ${randomElement(lastNames)}`,
@@ -72,42 +74,26 @@ const createUser = () => {
       familyDetails: {
         numOfChild: Math.floor(Math.random() * 3),
         maritalStatus: randomElement(["Single", "Married", "Widowed"]),
-        income: Math.floor(Math.random(29) + 1) * 1000,
+        income: 1000 * (Math.random() * 14 + 1),
         dependents: Math.floor(Math.random() * 6),
       },
-      primaryLanguage: randomElement([
-        "Marathi",
-        "Marathi",
-        "Marathi",
-        "Marathi",
-        "Marathi",
-        "Hindi",
-        "Hindi",
-        "Hindi",
-        "English",
-        "Other",
-        "Other",
-        "Other",
-      ]),
+      primaryLanguage: randomElementRatio(
+        ["Marathi", 5],
+        ["Hindi", 3],
+        ["English", 1],
+        [("Other", 3)]
+      ),
     },
     educationStatus: {
-      educationStatus: randomElement([
-        "No Education",
-        "No Education",
-        "No Education",
-        "No Education",
-        "No Education",
-        "Primary School",
-        "Primary School",
-        "Primary School",
-        "Middle School",
-        "Middle School",
-        "10th",
-        "12th",
-        "12th",
-        "Diploma",
-        "Graduate",
-      ]),
+      educationStatus: randomElementRatio(
+        ["No Education", 5],
+        ["Primary School", 3],
+        ["Middle School", 2],
+        ["10th", 1],
+        ["12th", 2],
+        ["Diploma", 1],
+        ["Graduate", 1]
+      ),
       ongoingEducation: randomElement(["No", "No", "No", "Yes", "Yes"]),
       ongoingEducation: randomElement(["No", "No", "Yes"]),
     },
@@ -124,27 +110,13 @@ const createUser = () => {
       ]),
       allergies: randomElement(["Yes", "No"]),
       healthInsurance: randomElement(["Yes", "No"]),
-      chronicIllnesses: randomElement([
-        "Diabetes",
-        "Diabetes",
-        "Diabetes",
-        "Diabetes",
-        "Diabetes",
-        "Diabetes",
-        "Cancer",
-        "Arthritis",
-        "Arthritis",
-        "Arthritis",
-        "Arthritis",
-        "Arthritis",
-        "Stroke",
-        "Stroke",
-        "Stroke",
-        "Asthma",
-        "Asthma",
-        "Asthma",
-        "Asthma",
-      ]),
+      chronicIllnesses: randomElementRatio(
+        ["Diabetes", 5],
+        ["Cancer", 1],
+        ["Arthritis", 5],
+        ["Stroke", 3],
+        ["Asthma", 4]
+      ),
     },
     SocioeconomicStatus: {
       cleanWaterAccess: randomElement(["Yes", "No"]),
@@ -153,17 +125,60 @@ const createUser = () => {
       housingType: randomElement(["Kutcha", "Semi-Pucca", "Pucca"]),
     },
     govtSchemes: {
-      rationCard: randomElement(["Yes", "No"]),
-      aadharCard: randomElement(["Yes", "No"]),
-      esharamCard: randomElement(["Yes", "No"]),
-      panCard: randomElement(["Yes", "No"]),
-      voterId: randomElement(["Yes", "No"]),
+      rationCard:
+        randomElementRatio(["Yes", 1], ["No", 2]) === "Yes" ? "Yes" : undefined,
+      aadharCard:
+        randomElementRatio(["Yes", 1], ["No", 2]) === "Yes" ? "Yes" : undefined,
+      esharamCard:
+        randomElementRatio(["Yes", 1], ["No", 2]) === "Yes" ? "Yes" : undefined,
+      panCard:
+        randomElementRatio(["Yes", 1], ["No", 2]) === "Yes" ? "Yes" : undefined,
+      voterId:
+        randomElementRatio(["Yes", 1], ["No", 2]) === "Yes" ? "Yes" : undefined,
     },
+    location: {
+      type: "Point",
+      coordinates: randomElementRatio(
+        [[72.8831, 19.151], 3],
+        [[74.124, 15.2993], 2],
+        [[73.8567, 18.5204], 2],
+        [[72.8781, 19.0708], 2],
+        [[75.7139, 15.3173], 1],
+        [[77.5729, 12.9851], 1]
+      ).map((coord) => coord + (Math.random() - 0.5) * 0.1),
+    },
+    employmentStatus: {
+      currentEmployment: randomElementRatio(
+        ["Unemployed", 5],
+        ["Employed", 3],
+        ["Student", 2],
+        ["Retired", 2]
+      ),
+      workNature: randomElementRatio(
+        ["Permanent", 1],
+        ["Contract", 4],
+        ["Casual", 2]
+      ),
+      workIndustry: randomElementRatio(
+        ["Agriculture", 5],
+        ["Manufacturing", 4],
+        ["Construction", 6],
+        ["Other", 3]
+      ),
+      openForEmployment: randomElementRatio(["Yes", 5], ["No", 2]),
+    },
+    insertedAt:
+      Date.now() -
+      randomElementRatio(
+        [0, 5],
+        [1000 * 60 * 60 * 24 * 7, 3],
+        [1000 * 60 * 60 * 24 * 7 * 2, 2],
+        [1000 * 60 * 60 * 24 * 7 * 3, 1]
+      ),
   }
 }
 
-
-const USERS_TO_ADD = 40
+const USERS_TO_ADD = 200
 const populateDb = async () => {
   const users = Array(USERS_TO_ADD).fill().map(createUser)
   console.log("Generated, uploading...")

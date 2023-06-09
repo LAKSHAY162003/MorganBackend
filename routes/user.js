@@ -135,7 +135,7 @@ router.post("/register/byUser", (req, res) => {
     if (err) {
       return res.status(500).json({ message: err.message });
     } else {
-      Community=Community.toUpperCase();
+      const tempCom=Community.toUpperCase();
       const currentUser = new User({
         role:"User",
         pwd: hash,
@@ -145,7 +145,7 @@ router.post("/register/byUser", (req, res) => {
           PhoneNumber,
           name,
           gender,
-          Community,
+          Community:tempCom,
           ...basicDetails
         },
         ...rest

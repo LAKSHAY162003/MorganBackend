@@ -15,7 +15,7 @@ router.post("/createEvent",authorizeAdmin,async (req,res)=>{
     const currentEvent=new Event({
           _id,
           category:details.category,
-          location:details.location,
+          eventLocation:details.location,
           eventName:details.eventName,
           eventStartTime:new Date(),
           eventDuration:details.eventDuration,
@@ -56,7 +56,6 @@ router.post("/markAttendance",authorizeAdmin,async (req,res)=>{
 
 
 router.put("/editEvent",authorizeAdmin,async (req,res)=>{
-
   try {
         console.log("Reached");
       const details=req.body; 
@@ -65,12 +64,30 @@ router.put("/editEvent",authorizeAdmin,async (req,res)=>{
         const updatedEventData=new Event({
               _id,
               category:details.category,
-              location:details.location,
+              eventLocation:details.location,
               eventName:details.eventName,
               eventStartTime:new Date(),
               eventDuration:details.eventDuration,
-              eventDetails:details.eventDetails
+              eventDetails:details.eventDetails,
+              attended:details.attended,
+              registered:details.registered,
+              followedUp:details.followUp,
+              feedback:details.feedback,
+              imageUrl:details.imageUrl
         });
+
+        // eventId:eventId,
+        //       category:category,
+        //       location:location,
+        //       eventName:eventName,
+        //       eventDuration:eventDuration,
+        //       eventDetails:eventDetails,
+        //       attended:location1.state.attended,
+        //       registered:location1.state.registered,
+        //       followedUp:location1.state.followUp,
+        //       feedback:location1.state.feedback,
+        //       imageUrl:location1.state.imageUrl
+
     // Find the event by ID and update it with the new data
     const updatedEvent = await Event.findByIdAndUpdate(_id, updatedEventData, { new: true });
 

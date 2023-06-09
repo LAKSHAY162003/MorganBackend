@@ -130,7 +130,7 @@ router.post("/register/byUser", (req, res) => {
     return res.status(400).json({ message: 'Password, phone number, name, gender, and community are required.' });
   }
   const saltRounds = 10;
-
+  const _id=uuidv4();
   bcrypt.hash(pwd, saltRounds, function(err, hash){
     if (err) {
       return res.status(500).json({ message: err.message });
@@ -172,12 +172,11 @@ router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
   }
 
   const { PhoneNumber, name, gender, Community } = basicDetails;
-
   if (!pwd || !PhoneNumber || !name || !gender || !Community) {
     return res.status(400).json({ message: 'Password, phone number, name, gender, and community are required.' });
   }
   const saltRounds = 10;
-
+  const _id=uuidv4();
   bcrypt.hash(pwd, saltRounds, function(err, hash){
     if (err) {
       return res.status(500).json({ message: err.message });
@@ -206,6 +205,7 @@ router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
     }
   });
 });
+
 
 
 // login route !!

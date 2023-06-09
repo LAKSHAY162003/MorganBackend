@@ -55,6 +55,37 @@ router.post("/markAttendance",authorizeAdmin,async (req,res)=>{
 });
 
 
+router.put("/editEvent",authorizeAdmin,async (req,res)=>{
+
+  try {
+        console.log("Reached");
+      const details=req.body; 
+        const _id=details.eventId;
+        console.log("Hello ",_id); 
+        const updatedEventData=new Event({
+              _id,
+              category:details.category,
+              location:details.location,
+              eventName:details.eventName,
+              eventStartTime:new Date(),
+              eventDuration:details.eventDuration,
+              eventDetails:details.eventDetails
+        });
+    // Find the event by ID and update it with the new data
+    const updatedEvent = await Event.findByIdAndUpdate(_id, updatedEventData, { new: true });
+
+    if (updatedEvent) {
+      res.status(200).json({message:"Success"});
+    } else {
+      res.status(404).json({ error: 'Event not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+
+
+});
+
 // data retrival routes { all admin side }
 
 // get all events
@@ -96,6 +127,7 @@ router.get("/list/:id", async (req, res) => {
     const event = await Event.findById(req.params.id);
 
     if (event) {
+      console.log(event);
       res.status(200).json(event);
     } else {
       res.status(404).json({message: "Event not found"});

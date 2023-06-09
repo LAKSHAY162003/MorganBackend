@@ -6,8 +6,6 @@ const crypto = require("crypto")
 
 require("dotenv").config()
 
-const USERS_TO_ADD = 1000
-
 const firstNames = fs
   .readFileSync("./scripts/firstnames.txt")
   .toString()
@@ -19,8 +17,16 @@ const lastNames = fs
   .trim()
   .split("\n")
 
-const randomElement = (arr) => {
+const randomElement = (...arr) => {
+  arr = arr.flat()
   return arr[Math.floor(Math.random() * arr.length)]
+}
+
+const randomElementRatio = (...arr) => {
+  const expandedArr = arr
+    .map(([elem,freq]) => Array(freq ?? 1).fill(elem))
+    .flat()
+    return randomElement(expandedArr)
 }
 
 const randomString = (length = 8, space = "qwertyuopasdfghjklzxcvbnm") => {
@@ -156,6 +162,8 @@ const createUser = () => {
   }
 }
 
+
+const USERS_TO_ADD = 40
 const populateDb = async () => {
   const users = Array(USERS_TO_ADD).fill().map(createUser)
   console.log("Generated, uploading...")

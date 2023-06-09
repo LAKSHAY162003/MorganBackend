@@ -183,7 +183,7 @@ router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
     if (err) {
       return res.status(500).json({ message: err.message });
     } else {
-      Community=Community.toUpperCase();
+      const tempCom=Community.toUpperCase();
       const currentUser = new User({
         pwd: hash,
         role:"User",
@@ -192,7 +192,7 @@ router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
           PhoneNumber,
           name,
           gender,
-          Community,
+          Community:tempCom,
           ...basicDetails
         },
         ...rest

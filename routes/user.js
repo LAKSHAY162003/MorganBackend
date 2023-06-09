@@ -135,6 +135,7 @@ router.post("/register/byUser", (req, res) => {
     if (err) {
       return res.status(500).json({ message: err.message });
     } else {
+      Community=Community.toUpperCase();
       const currentUser = new User({
         role:"User",
         pwd: hash,
@@ -177,10 +178,12 @@ router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
   }
   const saltRounds = 10;
   const _id=uuidv4();
+  
   bcrypt.hash(pwd, saltRounds, function(err, hash){
     if (err) {
       return res.status(500).json({ message: err.message });
     } else {
+      Community=Community.toUpperCase();
       const currentUser = new User({
         pwd: hash,
         role:"User",
@@ -242,6 +245,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/addCommunity", async (req, res) => {
   const { Community } = req.body;
+
   const pwd ="DoesNotExist"+uuidv4();
   try {
     const currUser = new User({
@@ -249,7 +253,7 @@ router.post("/addCommunity", async (req, res) => {
       pwd,
       basicDetails: {
         // Other basic details properties
-        Community:Community,
+        Community:Community.toUpperCase(),
       },
     });
     console.log(Community);

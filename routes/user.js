@@ -430,7 +430,7 @@ const processData = (users) => {
 
 
 // group by community 
-router.get("/group/community",authorizeAdmin,async (req, res) => {
+router.get("/group/community",async (req, res) => {
   try {
     const users = await User.find();
     if (users.length > 0) {

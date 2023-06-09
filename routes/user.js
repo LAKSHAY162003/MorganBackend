@@ -252,7 +252,7 @@ router.post("/addCommunity", async (req, res) => {
         Community:Community,
       },
     });
-    
+    console.log(Community);
     User.insertMany([currUser], function (err) {
       if (err) {
         return res.status(500).json({ message: err.message });

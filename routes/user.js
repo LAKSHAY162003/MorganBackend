@@ -246,22 +246,32 @@ router.post("/login", async (req, res) => {
 router.post("/addCommunity", async (req, res) => {
   const { Community } = req.body;
 
-  const pwd ="DoesNotExist"+uuidv4();
   try {
+    // Check if community already exists
+    const existingCommunity = await User.findOne({ "basicDetails.Community": Community.toUpperCase() });
+
+    if (existingCommunity) {
+      return res.status(409).json({ message: "Community already exists" });
+    }
+
+    const pwd = "DoesNotExist" + uuidv4();
+    const isFakeUser=true;
+    const tempCom=Community.toUpperCase();
     const currUser = new User({
       // Other user properties
       pwd,
+      isFakeUser,
       basicDetails: {
         // Other basic details properties
-        Community:Community.toUpperCase(),
+        Community:tempCom,
       },
     });
-    console.log(Community);
+
     User.insertMany([currUser], function (err) {
       if (err) {
         return res.status(500).json({ message: err.message });
       } else {
-        return res.status(200).json({message:"Success"});
+        return res.status(200).json({ message: "Success" });
       }
     });
 
@@ -269,6 +279,7 @@ router.post("/addCommunity", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
 
 
 

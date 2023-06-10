@@ -1,14 +1,14 @@
 //jshint esversion:6
-require("dotenv").config();
+require("dotenv").config()
 const express = require("express")
 const router = express.Router()
-const User=require("../models/User");
-const jwt=require("jsonwebtoken");
-const bcrypt=require("bcryptjs");
-const authorizeUser=require("../middleware/userAuth");
-const authorizeAdmin=require("../middleware/adminAuth");
-const Event=require("../models/events");
-const { v4: uuidv4 } = require('uuid');
+const User = require("../models/User")
+const jwt = require("jsonwebtoken")
+const bcrypt = require("bcryptjs")
+const authorizeUser = require("../middleware/userAuth")
+const authorizeAdmin = require("../middleware/adminAuth")
+const Event = require("../models/events")
+const { v4: uuidv4 } = require("uuid")
 
 // use same as registeration done by the userItself !! it is that route
 
@@ -32,9 +32,9 @@ const { v4: uuidv4 } = require('uuid');
 //       medicalRecords: { hospitalizationRecords, chronicIllnesses, currentMedications, bloodGroup, allergies, vaccinationRecords, healthInsurance },
 //       govtSchemes: { rationCard, aadharCard, esharamCard, panCard, voterId }
 //     } = req.body;
-  
+
 //     const _id = uuidv4();
-    
+
 //     const saltRounds = 10;
 //         bcrypt.hash(pwd, saltRounds, function(err, hash){
 //                   const currentUser =new User({
@@ -96,17 +96,17 @@ const { v4: uuidv4 } = require('uuid');
 //                 voterId
 //               }
 //             });
-  
+
 //             User.insertMany([currentUser], function (err) {
 //               if (err) {
 //                 res.status(500).json({ message: err.message })
 //               } else {
-//                 const user={_id:_id,role:"Admin"}; 
+//                 const user={_id:_id,role:"Admin"};
 //                 const accessToken=jwt.sign(user,process.env.SECRET_KEY);
 //                 res.status(200).json({accessToken:accessToken});
 //               }
 //             })
-  
+
 //         });
 //   }
 //   catch(err){
@@ -115,176 +115,222 @@ const { v4: uuidv4 } = require('uuid');
 //   }
 // })
 
-// registeration done by the userItself !! it is that route 
+const saltRounds = 10
+
+// registeration done by the userItself !! it is that route
+
+router.post("/register/admin", (req, res) => {
+  console.log(req.body)
+  const { name, password, number } = req.body
+
+  if (!name || !password || !number) {
+    return res.status(400).json({ message: "Basic details are required." })
+  }
+
+  const _id = uuidv4()
+  bcrypt.hash(password, saltRounds, function (err, hash) {
+    if (err) {
+      return res.status(500).json({ message: err.message })
+    } else {
+      const currentUser = new User({
+        role: "Admin",
+        pwd: hash,
+        _id,
+        basicDetails: {
+          name,
+          PhoneNumber: number,
+        },
+      })
+
+      User.insertMany([currentUser], function (err) {
+        if (err) {
+          return res.status(500).json({ message: err.message })
+        } else {
+          const user = {
+            _id: currentUser._id,
+            role: "Admin",
+            name: currentUser.basicDetails.name,
+          }
+          const accessToken = jwt.sign(user, process.env.SECRET_KEY)
+          return res.status(200).json({ ...user, accessToken })
+        }
+      })
+    }
+  })
+})
 
 router.post("/register/byUser", (req, res) => {
-  const { pwd, basicDetails, ...rest } = req.body;
-  
+  const { pwd, basicDetails, ...rest } = req.body
+
   if (!basicDetails) {
-    return res.status(400).json({ message: 'Basic details are required.' });
+    return res.status(400).json({ message: "Basic details are required." })
   }
 
-  const { PhoneNumber, name, gender, Community } = basicDetails;
+  const { PhoneNumber, name, gender, Community } = basicDetails
 
   if (!pwd || !PhoneNumber || !name || !gender || !Community) {
-    return res.status(400).json({ message: 'Password, phone number, name, gender, and community are required.' });
+    return res.status(400).json({
+      message:
+        "Password, phone number, name, gender, and community are required.",
+    })
   }
-  const saltRounds = 10;
-  const _id=uuidv4();
-  bcrypt.hash(pwd, saltRounds, function(err, hash){
+  const _id = uuidv4()
+  bcrypt.hash(pwd, saltRounds, function (err, hash) {
     if (err) {
-      return res.status(500).json({ message: err.message });
+      return res.status(500).json({ message: err.message })
     } else {
-      const tempCom=Community.toUpperCase();
+      const tempCom = Community.toUpperCase()
       const currentUser = new User({
-        role:"User",
+        role: "User",
         pwd: hash,
-        role:"User",
+        role: "User",
         _id,
         basicDetails: {
           PhoneNumber,
           name,
           gender,
-          Community:tempCom,
-          ...basicDetails
+          Community: tempCom,
+          ...basicDetails,
         },
-        ...rest
-      });
+        ...rest,
+      })
 
       User.insertMany([currentUser], function (err) {
         if (err) {
-          return res.status(500).json({ message: err.message });
+          return res.status(500).json({ message: err.message })
         } else {
-          const user = { _id: currentUser._id, role: "User" };
-          const accessToken = jwt.sign(user, process.env.SECRET_KEY);
-          return res.status(200).json({ accessToken: accessToken });
+          const user = { _id: currentUser._id, role: "User" }
+          const accessToken = jwt.sign(user, process.env.SECRET_KEY)
+          return res.status(200).json({ accessToken: accessToken })
         }
-      });
+      })
     }
-  });
-});
+  })
+})
 
 // registeration done by admin !! it is that route    , or just use the user registeration route and change the role to admin??
 router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
-  const { pwd, basicDetails, ...rest } = req.body;
-  
+  const { pwd, basicDetails, ...rest } = req.body
+
   if (!basicDetails) {
-    return res.status(400).json({ message: 'Basic details are required.' });
+    return res.status(400).json({ message: "Basic details are required." })
   }
 
-  const { PhoneNumber, name, gender, Community } = basicDetails;
+  const { PhoneNumber, name, gender, Community } = basicDetails
   if (!pwd || !PhoneNumber || !name || !gender || !Community) {
-    return res.status(400).json({ message: 'Password, phone number, name, gender, and community are required.' });
+    return res.status(400).json({
+      message:
+        "Password, phone number, name, gender, and community are required.",
+    })
   }
-  const saltRounds = 10;
-  const _id=uuidv4();
-  
-  bcrypt.hash(pwd, saltRounds, function(err, hash){
+  const saltRounds = 10
+  const _id = uuidv4()
+
+  bcrypt.hash(pwd, saltRounds, function (err, hash) {
     if (err) {
-      return res.status(500).json({ message: err.message });
+      return res.status(500).json({ message: err.message })
     } else {
-      const tempCom=Community.toUpperCase();
+      const tempCom = Community.toUpperCase()
       const currentUser = new User({
         pwd: hash,
-        role:"User",
+        role: "User",
         _id,
         basicDetails: {
           PhoneNumber,
           name,
           gender,
-          Community:tempCom,
-          ...basicDetails
+          Community: tempCom,
+          ...basicDetails,
         },
-        ...rest
-      });
+        ...rest,
+      })
 
       User.insertMany([currentUser], function (err) {
         if (err) {
-          return res.status(500).json({ message: err.message });
+          return res.status(500).json({ message: err.message })
         } else {
-          return res.status(200).json({message:"Success"});
+          return res.status(200).json({ message: "Success" })
         }
-      });
+      })
     }
-  });
-});
-
-
+  })
+})
 
 // login route !!
 // Sign in by Phone Number and Password
 router.post("/login", async (req, res) => {
-  const { PhoneNumber, pwd } = req.body;
-  console.log(PhoneNumber, pwd);
+  const { PhoneNumber, pwd } = req.body
+  console.log(PhoneNumber, pwd)
   try {
-    const results = await User.find({ 'basicDetails.PhoneNumber': PhoneNumber });
+    const results = await User.find({ "basicDetails.PhoneNumber": PhoneNumber })
 
     if (results.length === 0) {
-      return res.status(500).json({ message: "NO ENTRY FOUND !!!" });
+      return res.status(500).json({ message: "NO ENTRY FOUND !!!" })
     }
 
-    let userFound = false;
+    let userFound = false
 
     for (const result of results) {
-      const storedHashedPassword = result.pwd;
-      const passwordMatch = await bcrypt.compare(pwd, storedHashedPassword);
+      const storedHashedPassword = result.pwd
+      const passwordMatch = await bcrypt.compare(pwd, storedHashedPassword)
 
       if (passwordMatch) {
-        const user = { _id: result._id, role: "User" };
-        const accessToken = jwt.sign(user, process.env.SECRET_KEY);
-        return res.status(200).json({ accessToken: accessToken });
+        const user = {
+          _id: result._id,
+          role: "User",
+          name: result.basicDetails.name,
+        }
+        const accessToken = jwt.sign(user, process.env.SECRET_KEY)
+        return res.status(200).json({ accessToken, ...user })
       }
     }
 
-    res.status(500).json({ message: "INVALID CREDENTIALS !!!" });
+    res.status(500).json({ message: "INVALID CREDENTIALS !!!" })
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message })
   }
-});
-
+})
 
 router.post("/addCommunity", async (req, res) => {
-  const { Community } = req.body;
+  const { Community } = req.body
 
   try {
     // Check if community already exists
-    const existingCommunity = await User.findOne({ "basicDetails.Community": Community.toUpperCase() });
+    const existingCommunity = await User.findOne({
+      "basicDetails.Community": Community.toUpperCase(),
+    })
 
     if (existingCommunity) {
-      return res.status(409).json({ message: "Community already exists" });
+      return res.status(409).json({ message: "Community already exists" })
     }
 
-    const pwd = "DoesNotExist" + uuidv4();
-    const isFakeUser=true;
-    const tempCom=Community.toUpperCase();
+    const pwd = "DoesNotExist" + uuidv4()
+    const isFakeUser = true
+    const tempCom = Community.toUpperCase()
     const currUser = new User({
       // Other user properties
       pwd,
       isFakeUser,
       basicDetails: {
         // Other basic details properties
-        Community:tempCom,
+        Community: tempCom,
       },
-    });
+    })
 
     User.insertMany([currUser], function (err) {
       if (err) {
-        return res.status(500).json({ message: err.message });
+        return res.status(500).json({ message: err.message })
       } else {
-        return res.status(200).json({ message: "Success" });
+        return res.status(200).json({ message: "Success" })
       }
-    });
-
+    })
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message })
   }
-});
-
-
-
+})
 
 // get all users list !!
-router.get("/",authorizeAdmin, async (req, res) => {
+router.get("/", authorizeAdmin, async (req, res) => {
   try {
     const result = await User.find({})
     if (result.length > 0) {
@@ -297,11 +343,10 @@ router.get("/",authorizeAdmin, async (req, res) => {
   }
 })
 
-
 // filter user by Community
-router.get("/filter/community",authorizeAdmin, async (req, res) => {
+router.get("/filter/community", authorizeAdmin, async (req, res) => {
   try {
-    const community = req.body.community;
+    const community = req.body.community
     const result = await User.find({ "basicDetails.Community": community })
     if (result.length > 0) {
       res.status(200).json({ result: result })
@@ -313,11 +358,10 @@ router.get("/filter/community",authorizeAdmin, async (req, res) => {
   }
 })
 
-
 // filter user by age
-router.get("/filter/age",authorizeAdmin,async (req, res) => {
+router.get("/filter/age", authorizeAdmin, async (req, res) => {
   try {
-    const age = req.body.age;
+    const age = req.body.age
     const result = await User.find({ "basicDetails.age": age })
     if (result.length > 0) {
       res.status(200).json({ result: result })
@@ -329,14 +373,14 @@ router.get("/filter/age",authorizeAdmin,async (req, res) => {
   }
 })
 
-// filter user by name 
-router.get("/filter/name",authorizeAdmin,async (req, res) => {
+// filter user by name
+router.get("/filter/name", authorizeAdmin, async (req, res) => {
   try {
     // const name = req.query.name;
-    const name = new RegExp(`^${req.query.name}`, 'i'); // Case-insensitive regex to match the name prefix
+    const name = new RegExp(`^${req.query.name}`, "i") // Case-insensitive regex to match the name prefix
 
     const result = await User.find({ "basicDetails.name": name })
-      // UserDetails
+    // UserDetails
     if (result.length > 0) {
       res.status(200).json({ result: result })
     } else {
@@ -348,9 +392,9 @@ router.get("/filter/name",authorizeAdmin,async (req, res) => {
 })
 
 // filter user by phoneNumber
-router.get("/filter/phoneNumber",authorizeAdmin,async (req, res) => {
+router.get("/filter/phoneNumber", authorizeAdmin, async (req, res) => {
   try {
-    const PhoneNumber = req.body.phoneNumber;
+    const PhoneNumber = req.body.phoneNumber
     const result = await User.find({ "basicDetails.PhoneNumber": PhoneNumber })
     if (result.length > 0) {
       res.status(200).json({ result: result })
@@ -360,13 +404,12 @@ router.get("/filter/phoneNumber",authorizeAdmin,async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
-});
+})
 
-
-// GROUPING : 
+// GROUPING :
 
 // group by education levels
-router.get("/group/education",authorizeAdmin,async (req, res) => {
+router.get("/group/education", authorizeAdmin, async (req, res) => {
   try {
     const users = await User.find()
     if (users.length > 0) {
@@ -401,11 +444,11 @@ const processData3 = (users) => {
 
   // console.log(ageGroups);
 
-  return (educationGroups);
+  return educationGroups
 }
 
-// group by age 
-router.get("/group/age",authorizeAdmin,async (req, res) => {
+// group by age
+router.get("/group/age", authorizeAdmin, async (req, res) => {
   try {
     const users = await User.find()
     if (users.length > 0) {
@@ -440,18 +483,17 @@ const processData = (users) => {
 
   // console.log(ageGroups);
 
-  return (ageGroups);
+  return ageGroups
 }
 
-
-// group by community 
-router.get("/group/community",async (req, res) => {
+// group by community
+router.get("/group/community", async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find()
     if (users.length > 0) {
       // console.log(users);
-      const result =processData2(users)
-      console.log(result);
+      const result = processData2(users)
+      console.log(result)
       res.status(200).json({ result: result })
       // using the result property of the json object returned we can
       // have that object send as prop to the component of chart.js
@@ -463,37 +505,35 @@ router.get("/group/community",async (req, res) => {
   }
 })
 
-const processData2 =(users) => {
+const processData2 = (users) => {
   const communityGroups = {}
-  const regexPattern = /^DoesNotExist/;
+  const regexPattern = /^DoesNotExist/
   // Categorize users by age
   users.forEach((user) => {
     const community = user.basicDetails.Community
-    if(regexPattern.test(user.pwd)){
-      console.log("Hello");
+    if (regexPattern.test(user.pwd)) {
+      console.log("Hello")
       if (!communityGroups[community]) {
         communityGroups[community] = []
       }
-    }
-    else{
-        // Check if the age group exists, if not create it
-        if (!communityGroups[community]) {
-          communityGroups[community] = []
-        }
+    } else {
+      // Check if the age group exists, if not create it
+      if (!communityGroups[community]) {
+        communityGroups[community] = []
+      }
 
-        // Add the user to the respective age group
-        communityGroups[community].push(user)
-        }
+      // Add the user to the respective age group
+      communityGroups[community].push(user)
+    }
   })
 
   // console.log(ageGroups);
 
-  return (communityGroups);
+  return communityGroups
 }
 
-
-// group by gender 
-router.get("/group/gender",authorizeAdmin,async (req, res) => {
+// group by gender
+router.get("/group/gender", authorizeAdmin, async (req, res) => {
   try {
     const users = await User.find()
     if (users.length > 0) {
@@ -528,291 +568,290 @@ const processData4 = (users) => {
 
   // console.log(ageGroups);
 
-  return (genderGroups);
+  return genderGroups
 }
-
 
 // user Side updating the info !! { he should be only updating it !! }
 //added partial update support, coz my user update page sends data in parts and not the whole object
 // diabled authentication for now: authorizeUser,  please add it later
 router.put("/userUpdates/:id", async (req, res) => {
   try {
-      const _id = req.params.id; // Extracting userId from the route parameter
-      
-      const result = await User.findOne({ _id: _id });
-      
-      if (result) {
-          let update = {};
-          for(let key in req.body) {
-              if(req.body[key] instanceof Object && !Array.isArray(req.body[key])) {
-                  for(let subKey in req.body[key]) {
-                      update[`${key}.${subKey}`] = req.body[key][subKey];
-                  }
-              } else {
-                  update[key] = req.body[key];
-              }
+    const _id = req.params.id // Extracting userId from the route parameter
+
+    const result = await User.findOne({ _id: _id })
+
+    if (result) {
+      let update = {}
+      for (let key in req.body) {
+        if (req.body[key] instanceof Object && !Array.isArray(req.body[key])) {
+          for (let subKey in req.body[key]) {
+            update[`${key}.${subKey}`] = req.body[key][subKey]
           }
-
-          User.findByIdAndUpdate({ _id: _id }, { $set: update }, { new: true }, (err, updatedUser) => {
-              if (err) {
-                  res.status(500).json({ message: err.message });
-              } else {
-                  res.status(200).json({ message: "User updated successfully", user: updatedUser });
-              }
-          });
-      } else {
-          res.status(500).json({ message: "No Such User Exist" });
+        } else {
+          update[key] = req.body[key]
+        }
       }
+
+      User.findByIdAndUpdate(
+        { _id: _id },
+        { $set: update },
+        { new: true },
+        (err, updatedUser) => {
+          if (err) {
+            res.status(500).json({ message: err.message })
+          } else {
+            res
+              .status(200)
+              .json({ message: "User updated successfully", user: updatedUser })
+          }
+        }
+      )
+    } else {
+      res.status(500).json({ message: "No Such User Exist" })
+    }
   } catch (err) {
-      res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message })
   }
-});
+})
 
-
-//get user details by id  , 
-router.get("/user/:id",  async (req, res) => {
+//get user details by id  ,
+router.get("/user/:id", async (req, res) => {
   try {
-      const _id = req.params.id;  // Extracting userId from request params
+    const _id = req.params.id // Extracting userId from request params
 
-      // Find user based on the id
-      const user = await User.findById(_id);
-      
-      if (user) {
-          res.status(200).json(user);
-      } else {
-          res.status(404).json({ message: "User not found" });
-      }
+    // Find user based on the id
+    const user = await User.findById(_id)
+
+    if (user) {
+      res.status(200).json(user)
+    } else {
+      res.status(404).json({ message: "User not found" })
+    }
   } catch (err) {
-      res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message })
   }
-});
+})
 
-
-// Show All the Events in which he/she has not registered !! 
-router.get("/getUnregisteredEvents",authorizeUser,(req,res)=>{
-
-    const userId=req.user._id;
-    // getAllEvents where registered.includes(userId) is false !! 
-    Event.find({ registered: { $nin: [userId] } })
-      .exec((err, events) => {
-      if (err) {
-        res.status(500).json({message:err.message});
-      } else {
-        res.status(200).json({events:events});
-     }
-    });
-
-});
-
+// Show All the Events in which he/she has not registered !!
+router.get("/getUnregisteredEvents", authorizeUser, (req, res) => {
+  const userId = req.user._id
+  // getAllEvents where registered.includes(userId) is false !!
+  Event.find({ registered: { $nin: [userId] } }).exec((err, events) => {
+    if (err) {
+      res.status(500).json({ message: err.message })
+    } else {
+      res.status(200).json({ events: events })
+    }
+  })
+})
 
 // Show All the Events in which he/she has registered but not attended !!
-// whenever user will click on frontend side to attend the page will 
-// refetch this list again !! 
-router.get("/getRegisteredEvents",authorizeUser,(req,res)=>{
-
-  const userId=req.user._id;
-  // getAllEvents where registered.includes(userId) is false !! 
-  Event.find({ registered: { $in: [userId] }, attended: { $nin: [userId] } })
-    .exec((err, events) => {
+// whenever user will click on frontend side to attend the page will
+// refetch this list again !!
+router.get("/getRegisteredEvents", authorizeUser, (req, res) => {
+  const userId = req.user._id
+  // getAllEvents where registered.includes(userId) is false !!
+  Event.find({
+    registered: { $in: [userId] },
+    attended: { $nin: [userId] },
+  }).exec((err, events) => {
     if (err) {
-      res.status(500).json({message:err.message});
+      res.status(500).json({ message: err.message })
     } else {
-      res.status(200).json({events:events});
-   }
-  });
-
-});
+      res.status(200).json({ events: events })
+    }
+  })
+})
 
 // get all the events in which he/she has Registred !! without authorization
 router.get("/getUsersRegisteredEvents/:id", (req, res) => {
-  const userId = req.params.id;
+  const userId = req.params.id
 
   // Check if userId is provided
   if (!userId) {
-    return res.status(400).json({ message: "User ID is required" });
+    return res.status(400).json({ message: "User ID is required" })
   }
 
   // getAllEvents where registered.includes(userId) is false
-  Event.find({ registered: { $in: [userId] }, attended: { $nin: [userId] } })
-    .exec((err, events) => {
-      if (err) {
-        res.status(500).json({ message: err.message });
-      } else {
-        res.status(200).json(events);
-      }
-    });
-});
-
-
+  Event.find({
+    registered: { $in: [userId] },
+    attended: { $nin: [userId] },
+  }).exec((err, events) => {
+    if (err) {
+      res.status(500).json({ message: err.message })
+    } else {
+      res.status(200).json(events)
+    }
+  })
+})
 
 // now : REGISTER , ATTEND , FOLLOW UP AND FEEDBACK AN EVENT OPTION !!
 // FOR THE USER !!
-// All of them will be post requests bcz we are adding a user !! 
-router.post("/registerForEvent",authorizeUser,async(req,res)=>{
-  try{
-    let eventId=req.body.eventId;
-    const userId=req.user._id;
-    const event = await Event.findById(eventId);
+// All of them will be post requests bcz we are adding a user !!
+router.post("/registerForEvent", authorizeUser, async (req, res) => {
+  try {
+    let eventId = req.body.eventId
+    const userId = req.user._id
+    const event = await Event.findById(eventId)
     if (!event.registered.includes(userId)) {
-      event.registered.push(userId);
+      event.registered.push(userId)
     } else {
-      res.status(500).json({message:'User is already registered for this event.'});
+      res
+        .status(500)
+        .json({ message: "User is already registered for this event." })
     }
-    await event.save();
-    res.status(200).json({message:"Success !!"});
-  }
-  catch(err){
-    res.status(500).json({message:err.message});
+    await event.save()
+    res.status(200).json({ message: "Success !!" })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
   }
 })
 
-router.post("/registerForEvent/byAdmin",authorizeAdmin,async(req,res)=>{
-  try{
-    
-    console.log("rEACTED");
-    let eventId=req.body.eventId;
-    const userId=req.body.userId;
-    const event = await Event.findById(eventId);
+router.post("/registerForEvent/byAdmin", authorizeAdmin, async (req, res) => {
+  try {
+    console.log("rEACTED")
+    let eventId = req.body.eventId
+    const userId = req.body.userId
+    const event = await Event.findById(eventId)
     if (!event.registered.includes(userId)) {
-      event.registered.push(userId);
+      event.registered.push(userId)
     } else {
-      res.status(500).json({message:'User is already registered for this event.'});
+      res
+        .status(500)
+        .json({ message: "User is already registered for this event." })
     }
-    await event.save();
-    res.status(200).json({message:"Success !!"});
-  }
-  catch(err){
-    res.status(500).json({message:err.message});
+    await event.save()
+    res.status(200).json({ message: "Success !!" })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
   }
 })
-
 
 //register for an event (user side)
 router.post("/registerForAnEvent", async (req, res) => {
   try {
-    const { eventId, userId } = req.body;
+    const { eventId, userId } = req.body
 
-    const event = await Event.findById(eventId);
+    const event = await Event.findById(eventId)
     if (!event) {
-      return res.status(404).json({ message: 'Event not found.' });
+      return res.status(404).json({ message: "Event not found." })
     }
 
     if (!event.registered.includes(userId)) {
-      event.registered.push(userId);
+      event.registered.push(userId)
     } else {
-      return res.status(500).json({ message: "repeat" });
+      return res.status(500).json({ message: "repeat" })
     }
 
-    await event.save();
-    res.status(200).json({ message: "Success !!" });
+    await event.save()
+    res.status(200).json({ message: "Success !!" })
   } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-
-
-router.post("/attendEvent",authorizeUser,async(req,res)=>{
-  try{
-    let eventId=req.body.eventId;
-    const userId=req.user._id;
-    const event = await Event.findById(eventId);
-    if (!event.attended.includes(userId)) {
-      event.attended.push(userId);
-    } else {
-      res.status(500).json({message:'User is already registered for this event.'});
-    }
-    await event.save();
-    res.status(200).json({message:"Success !!"});
-  }
-  catch(err){
-    res.status(500).json({message:err.message});
+    res.status(500).json({ message: err.message })
   }
 })
 
+router.post("/attendEvent", authorizeUser, async (req, res) => {
+  try {
+    let eventId = req.body.eventId
+    const userId = req.user._id
+    const event = await Event.findById(eventId)
+    if (!event.attended.includes(userId)) {
+      event.attended.push(userId)
+    } else {
+      res
+        .status(500)
+        .json({ message: "User is already registered for this event." })
+    }
+    await event.save()
+    res.status(200).json({ message: "Success !!" })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
 
 //for user side attend an event , won't affect anything
 router.post("/attendAnEvent", async (req, res) => {
   try {
-    const { eventId, userId } = req.body;
+    const { eventId, userId } = req.body
 
-    const event = await Event.findById(eventId);
+    const event = await Event.findById(eventId)
     if (!event) {
-      return res.status(404).json({ message: 'Event not found.' });
+      return res.status(404).json({ message: "Event not found." })
     }
 
     if (!event.attended.includes(userId)) {
-      event.attended.push(userId);
+      event.attended.push(userId)
     } else {
-      return res.status(500).json({ message: "User is already registered for this event." });
+      return res
+        .status(500)
+        .json({ message: "User is already registered for this event." })
     }
 
-    await event.save();
-    res.status(200).json({ message: "Success !!" });
+    await event.save()
+    res.status(200).json({ message: "Success !!" })
   } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-//list of all the events in which user has attended
-router.get("/getUsersAttendedEvents/:id", (req, res) => {
-  const userId = req.params.id;
-
-  // Check if userId is provided
-  if (!userId) {
-    return res.status(400).json({ message: "User ID is required" });
-  }
-
-  // getAllEvents where registered.includes(userId) and attended.includes(userId)
-  Event.find({ registered: { $in: [userId] }, attended: { $in: [userId] } })
-    .exec((err, events) => {
-      if (err) {
-        res.status(500).json({ message: err.message });
-      } else {
-        res.status(200).json(events);
-      }
-    });
-});
-
-
-
-
-router.post("/followUpForEvent",authorizeUser,async(req,res)=>{
-  try{
-    let eventId=req.body.eventId;
-    const userId=req.user._id;
-    const event = await Event.findById(eventId);
-    if (!event.followedUp.includes(userId)) {
-      event.followedUp.push(userId);
-    } else {
-      res.status(500).json({message:'User is already registered for this event.'});
-    }
-    await event.save();
-    res.status(200).json({message:"Success !!"});
-  }
-  catch(err){
-    res.status(500).json({message:err.message});
+    res.status(500).json({ message: err.message })
   }
 })
 
-router.post("/feedbackForEvent",authorizeUser,async(req,res)=>{
-  try{
-    let eventId=req.body.eventId;
-    let content=req.body.content;
-    const userId=req.user._id;
-    const event = await Event.findById(eventId);
-    
+//list of all the events in which user has attended
+router.get("/getUsersAttendedEvents/:id", (req, res) => {
+  const userId = req.params.id
+
+  // Check if userId is provided
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" })
+  }
+
+  // getAllEvents where registered.includes(userId) and attended.includes(userId)
+  Event.find({
+    registered: { $in: [userId] },
+    attended: { $in: [userId] },
+  }).exec((err, events) => {
+    if (err) {
+      res.status(500).json({ message: err.message })
+    } else {
+      res.status(200).json(events)
+    }
+  })
+})
+
+router.post("/followUpForEvent", authorizeUser, async (req, res) => {
+  try {
+    let eventId = req.body.eventId
+    const userId = req.user._id
+    const event = await Event.findById(eventId)
+    if (!event.followedUp.includes(userId)) {
+      event.followedUp.push(userId)
+    } else {
+      res
+        .status(500)
+        .json({ message: "User is already registered for this event." })
+    }
+    await event.save()
+    res.status(200).json({ message: "Success !!" })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
+router.post("/feedbackForEvent", authorizeUser, async (req, res) => {
+  try {
+    let eventId = req.body.eventId
+    let content = req.body.content
+    const userId = req.user._id
+    const event = await Event.findById(eventId)
+
     // now create a feedback
-    const currentFeedback={
+    const currentFeedback = {
       uid: userId,
       content: content,
     }
-    event.feedback.push(currentFeedback);
-    await event.save();
-    res.status(200).json({message:"Success !!"});
-  }
-  catch(err){
-    res.status(500).json({message:err.message});
+    event.feedback.push(currentFeedback)
+    await event.save()
+    res.status(200).json({ message: "Success !!" })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
   }
 })
 

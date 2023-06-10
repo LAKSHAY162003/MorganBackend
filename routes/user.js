@@ -859,4 +859,76 @@ router.post("/feedbackForEvent", authorizeUser, async (req, res) => {
   }
 })
 
+router.get("/getFollowUpPending/:id", (req, res) => {
+  const userId = req.params.id
+
+  // Check if userId is provided
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" })
+  }
+
+  // Find all events where registered.includes(userId) and attended.includes(userId) but not followedUp.includes(userId)
+  Event.find({
+    registered: { $in: [userId] },
+    attended: { $in: [userId] },
+    followedUp: { $nin: [userId] }, // $nin (not in) is used here
+  }).exec((err, events) => {
+    if (err) {
+      res.status(500).json({ message: err.message })
+    } else {
+      res.status(200).json(events)
+    }
+  })
+})
+
+// Mark user as followed up for an event
+router.post("/markUserFollowedUp", async (req, res) => {
+  try {
+    const { eventId, userId } = req.body
+
+    const event = await Event.findById(eventId)
+    if (!event) {
+      return res.status(404).json({ message: "Event not found." })
+    }
+
+    if (!event.followedUp.includes(userId)) {
+      event.followedUp.push(userId)
+    } else {
+      return res
+        .status(500)
+        .json({
+          message: "User is already marked as followed up for this event.",
+        })
+    }
+
+    await event.save()
+    res.status(200).json({ message: "Success, user marked as followed up !!" })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
+// List of all events in which user has registered, attended and followed up
+router.get("/getFollowUpDone/:id", (req, res) => {
+  const userId = req.params.id
+
+  // Check if userId is provided
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" })
+  }
+
+  // Find all events where registered.includes(userId), attended.includes(userId) and followedUp.includes(userId)
+  Event.find({
+    registered: { $in: [userId] },
+    attended: { $in: [userId] },
+    followedUp: { $in: [userId] }, // $in (in) is used here
+  }).exec((err, events) => {
+    if (err) {
+      res.status(500).json({ message: err.message })
+    } else {
+      res.status(200).json(events)
+    }
+  })
+})
+
 module.exports = router

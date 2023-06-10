@@ -85,7 +85,7 @@ const createUser = () => {
       ),
     },
     educationStatus: {
-      educationStatus: randomElementRatio(
+      currentEducationLevel: randomElementRatio(
         ["No Education", 5],
         ["Primary School", 3],
         ["Middle School", 2],
@@ -94,8 +94,7 @@ const createUser = () => {
         ["Diploma", 1],
         ["Graduate", 1]
       ),
-      ongoingEducation: randomElement(["No", "No", "No", "Yes", "Yes"]),
-      ongoingEducation: randomElement(["No", "No", "Yes"]),
+      ongoingEducation: randomElementRatio(["No", 3], ["Yes", 2]),
     },
     medicalRecords: {
       bloodGroup: randomElement([
@@ -119,9 +118,12 @@ const createUser = () => {
       ),
     },
     SocioeconomicStatus: {
-      cleanWaterAccess: randomElement(["Yes", "No"]),
-      electricityAccess: randomElement(["Yes", "No"]),
-      transportationAccess: randomElement(["Public", "Private", "None"]),
+      cleanWaterAccess:
+        randomElementRatio(["Yes", 1], ["No", 2]) === "Yes" ? "Yes" : undefined,
+      electricityAccess:
+        randomElementRatio(["Yes", 2], ["No", 3]) === "Yes" ? "Yes" : undefined,
+      transportationAccess:
+        randomElementRatio(["Yes", 1], ["No", 2]) === "Yes" ? "Yes" : undefined,
       housingType: randomElement(["Kutcha", "Semi-Pucca", "Pucca"]),
     },
     govtSchemes: {
@@ -178,7 +180,7 @@ const createUser = () => {
   }
 }
 
-const USERS_TO_ADD = 200
+const USERS_TO_ADD = 250
 const populateDb = async () => {
   const users = Array(USERS_TO_ADD).fill().map(createUser)
   console.log("Generated, uploading...")

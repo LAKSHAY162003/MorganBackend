@@ -199,9 +199,13 @@ router.post("/register/byUser", (req, res) => {
         if (err) {
           return res.status(500).json({ message: err.message })
         } else {
-          const user = { _id: currentUser._id, role: "User" }
+          const user = {
+            _id: currentUser._id,
+            role: "User",
+            name: currentUser.basicDetails.name,
+          }
           const accessToken = jwt.sign(user, process.env.SECRET_KEY)
-          return res.status(200).json({ accessToken: accessToken })
+          return res.status(200).json({ ...user, accessToken })
         }
       })
     }
@@ -277,7 +281,7 @@ router.post("/login", async (req, res) => {
       if (passwordMatch) {
         const user = {
           _id: result._id,
-          role: "User",
+          role: result.role,
           name: result.basicDetails.name,
         }
         const accessToken = jwt.sign(user, process.env.SECRET_KEY)

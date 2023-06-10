@@ -1,223 +1,208 @@
 const express = require("express")
-const Event=require("../models/events");
+const Event = require("../models/events")
 const router = express.Router()
-const authorizeUser=require("../middleware/userAuth");
-const authorizeAdmin=require("../middleware/adminAuth");
-const { v4: uuidv4 } = require('uuid');
-const User=require("../models/User");
-
+const authorizeUser = require("../middleware/userAuth")
+const authorizeAdmin = require("../middleware/adminAuth")
+const { v4: uuidv4 } = require("uuid")
+const User = require("../models/User")
 
 // create new Event { without any attendance and all !! }
-router.post("/createEvent",authorizeAdmin,async (req,res)=>{
+router.post("/createEvent", authorizeAdmin, async (req, res) => {
+  const details = req.body
 
-  const details=req.body; 
-    const _id=uuidv4(); // auto generate !! 
-    const currentEvent=new Event({
-          _id,
-          category:details.category,
-          eventLocation:details.location,
-          eventName:details.eventName,
-          eventStartTime:new Date(),
-          eventDuration:details.eventDuration,
-          eventDetails:details.eventDetails
-    });
+  const _id = uuidv4() // auto generate !!
+  const currentEvent = new Event({
+    _id,
+    category: details.category,
+    eventLocation: details.location,
+    eventName: details.eventName,
+    eventStartTime: new Date(details.eventStartTime),
+    eventDuration: details.eventDuration,
+    eventDetails: details.eventDetails,
+  })
 
-    Event.insertMany([currentEvent], function (err) {
-      if (err) {
-        res.status(500).json({message:err.message});
-      } else {
-        res.status(200).json({ message: "Success"});
-      }
-    });
+  Event.insertMany([currentEvent], function (err) {
+    if (err) {
+      res.status(500).json({ message: err.message })
+    } else {
+      res.status(200).json({ message: "Success" })
+    }
+  })
+})
 
-
-});
-
-// mark Attendance from admin Side !! 
-router.post("/markAttendance",authorizeAdmin,async (req,res)=>{
-      try{
-            let eventId=req.body.eventId;
-            const userId=req.body.userId;
-            console.log(eventId);
-            const event = await Event.findById(eventId);
-            if (!event.attended.includes(userId)) {
-              event.attended.push(userId);
-            } else {
-              res.status(500).json({message:'User is already registered for this event.'});
-            }
-            await event.save();
-            res.status(200).json({message:"Success !!"});
-      }
-      catch(err){
-          console.log(err.message);
-          res.status(500).json({message:err.message});
-      }
-});
-
-
-router.put("/editEvent",authorizeAdmin,async (req,res)=>{
+// mark Attendance from admin Side !!
+router.post("/markAttendance", authorizeAdmin, async (req, res) => {
   try {
-        console.log("Reached");
-      const details=req.body; 
-        const _id=details.eventId;
-        console.log("Hello ",_id); 
-        const updatedEventData=new Event({
-              _id,
-              category:details.category,
-              eventLocation:details.location,
-              eventName:details.eventName,
-              eventStartTime:new Date(),
-              eventDuration:details.eventDuration,
-              eventDetails:details.eventDetails,
-              attended:details.attended,
-              registered:details.registered,
-              followedUp:details.followUp,
-              feedback:details.feedback,
-              imageUrl:details.imageUrl
-        });
+    let eventId = req.body.eventId
+    const userId = req.body.userId
+    console.log(eventId)
+    const event = await Event.findById(eventId)
+    if (!event.attended.includes(userId)) {
+      event.attended.push(userId)
+    } else {
+      res
+        .status(500)
+        .json({ message: "User is already registered for this event." })
+    }
+    await event.save()
+    res.status(200).json({ message: "Success !!" })
+  } catch (err) {
+    console.log(err.message)
+    res.status(500).json({ message: err.message })
+  }
+})
 
-        // eventId:eventId,
-        //       category:category,
-        //       location:location,
-        //       eventName:eventName,
-        //       eventDuration:eventDuration,
-        //       eventDetails:eventDetails,
-        //       attended:location1.state.attended,
-        //       registered:location1.state.registered,
-        //       followedUp:location1.state.followUp,
-        //       feedback:location1.state.feedback,
-        //       imageUrl:location1.state.imageUrl
+router.put("/editEvent", authorizeAdmin, async (req, res) => {
+  try {
+    console.log("Reached")
+    const details = req.body
+    const _id = details.eventId
+    console.log("Hello ", _id)
+    const updatedEventData = new Event({
+      _id,
+      category: details.category,
+      eventLocation: details.location,
+      eventName: details.eventName,
+      eventStartTime: new Date(),
+      eventDuration: details.eventDuration,
+      eventDetails: details.eventDetails,
+      attended: details.attended,
+      registered: details.registered,
+      followedUp: details.followUp,
+      feedback: details.feedback,
+      imageUrl: details.imageUrl,
+    })
+
+    // eventId:eventId,
+    //       category:category,
+    //       location:location,
+    //       eventName:eventName,
+    //       eventDuration:eventDuration,
+    //       eventDetails:eventDetails,
+    //       attended:location1.state.attended,
+    //       registered:location1.state.registered,
+    //       followedUp:location1.state.followUp,
+    //       feedback:location1.state.feedback,
+    //       imageUrl:location1.state.imageUrl
 
     // Find the event by ID and update it with the new data
-    const updatedEvent = await Event.findByIdAndUpdate(_id, updatedEventData, { new: true });
+    const updatedEvent = await Event.findByIdAndUpdate(_id, updatedEventData, {
+      new: true,
+    })
 
     if (updatedEvent) {
-      res.status(200).json({message:"Success"});
+      res.status(200).json({ message: "Success" })
     } else {
-      res.status(404).json({ error: 'Event not found' });
+      res.status(404).json({ error: "Event not found" })
     }
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" })
   }
-
-
-});
+})
 
 // data retrival routes { all admin side }
 
 // get all events
-// to get all events !! 
-router.get("/",async (req,res)=>{
-  try{
-    const result=await Event.find();
-    if(result.length>0){
-      res.status(200).json({result:result});
+// to get all events !!
+router.get("/", async (req, res) => {
+  try {
+    const result = await Event.find()
+    if (result.length > 0) {
+      res.status(200).json({ result: result })
+    } else {
+      res.status(200).json({ result: [] })
     }
-    else{
-      res.status(200).json({result:[]});
-    }
-  }
-  catch(err){
-    res.status(500).json({message:err.message});
+  } catch (err) {
+    res.status(500).json({ message: err.message })
   }
 })
 
 // get all events , in objects format !! added by vaibhav for events list and event page
 router.get("/list", async (req, res) => {
   try {
-    const result = await Event.find();
+    const result = await Event.find()
 
     if (result.length > 0) {
-      res.status(200).json(result);
+      res.status(200).json(result)
     } else {
-      res.status(200).json([]);
+      res.status(200).json([])
     }
+  } catch (err) {
+    res.status(500).json({ message: err.message })
   }
-  catch(err){
-    res.status(500).json({message: err.message});
-  }
-});
+})
 
 // get a specific event by its id
 router.get("/list/:id", async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id);
+    const event = await Event.findById(req.params.id)
 
     if (event) {
-      console.log(event);
-      res.status(200).json(event);
+      console.log(event)
+      res.status(200).json(event)
     } else {
-      res.status(404).json({message: "Event not found"});
+      res.status(404).json({ message: "Event not found" })
     }
+  } catch (err) {
+    res.status(500).json({ message: err.message })
   }
-  catch(err){
-    res.status(500).json({message: err.message});
-  }
-});
-
-
-
-
+})
 
 // getting attendance based on sessionId !!
-router.get("/attendance",authorizeAdmin, async (req, res) => {
+router.get("/attendance", authorizeAdmin, async (req, res) => {
   try {
     let eventId = req.query.eventId // accessing the request parameters !!
 
     Event.findById(eventId) // Replace `eventId` with the actual event ID
-  .exec(async (err, result) => {
-    if (err) {
-      res.status(500).json({ message: err.message });
-    } else {
-      const idList = result.attended;
-      // Fetch user details for each ID in `idList`
-      try {
-        const attendanceList = await User.find({ _id: { $in: idList } });
+      .exec(async (err, result) => {
+        if (err) {
+          res.status(500).json({ message: err.message })
+        } else {
+          const idList = result.attended
+          // Fetch user details for each ID in `idList`
+          try {
+            const attendanceList = await User.find({ _id: { $in: idList } })
 
-        res.status(200).json({ result: attendanceList });
-      } catch (error) {
-        res.status(500).json({ message: error.message });
-      }
-    }
-  });
-
+            res.status(200).json({ result: attendanceList })
+          } catch (error) {
+            res.status(500).json({ message: error.message })
+          }
+        }
+      })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
 })
 
 // getting registerList based on sessionId
-router.get("/registeredList",authorizeAdmin, async (req, res) => {
+router.get("/registeredList", authorizeAdmin, async (req, res) => {
   try {
     let eventId = req.query.eventId // accessing the request parameters !!
 
     Event.findById(eventId) // Replace `eventId` with the actual event ID
-  .exec(async (err, result) => {
-    if (err) {
-      res.status(500).json({ message: err.message });
-    } else {
-      const idList = result.registered;
+      .exec(async (err, result) => {
+        if (err) {
+          res.status(500).json({ message: err.message })
+        } else {
+          const idList = result.registered
 
-      // Fetch user details for each ID in `idList`
-      try {
-        const registerList = await User.find({ _id: { $in: idList } });
+          // Fetch user details for each ID in `idList`
+          try {
+            const registerList = await User.find({ _id: { $in: idList } })
 
-        res.status(200).json({ result: registerList });
-      } catch (error) {
-        res.status(500).json({ message: error.message });
-      }
-    }
-  });
-
+            res.status(200).json({ result: registerList })
+          } catch (error) {
+            res.status(500).json({ message: error.message })
+          }
+        }
+      })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
 })
 
-
-
 // get user feedbacks based on sessions
-router.get("/feedbacks",authorizeAdmin,async (req, res) => {
+router.get("/feedbacks", authorizeAdmin, async (req, res) => {
   try {
     const eventId = req.body.eventId
     const result = await Event.find({ _id: eventId })
@@ -231,10 +216,9 @@ router.get("/feedbacks",authorizeAdmin,async (req, res) => {
   }
 })
 
-
-// group sessions based on sessionIds and display there 
+// group sessions based on sessionIds and display there
 // attendance , register and followed up count !!
-router.get("/group/attendance",authorizeAdmin, async (req, res) => {
+router.get("/group/attendance", authorizeAdmin, async (req, res) => {
   try {
     const events = await Event.find()
     if (events.length > 0) {
@@ -254,15 +238,15 @@ router.get("/group/attendance",authorizeAdmin, async (req, res) => {
 // key : sessionId
 // value : eventSummary !!
 function processData4(events) {
-  const result = {};
+  const result = {}
 
   // Iterate over each event
   events.forEach((event) => {
-    const eventId = event._id;
-    const eventName = event.eventName;
-    const attendedCount = event.attended.length;
-    const registeredCount = event.registered.length;
-    const followedUpCount = event.followedUp.length;
+    const eventId = event._id
+    const eventName = event.eventName
+    const attendedCount = event.attended.length
+    const registeredCount = event.registered.length
+    const followedUpCount = event.followedUp.length
 
     // Create an object with the desired values
     const eventSummary = {
@@ -270,14 +254,13 @@ function processData4(events) {
       attendedCount,
       registeredCount,
       followedUpCount,
-    };
+    }
 
     // Add the eventSummary object to the result using sessionId as the key
-    result[eventId] = eventSummary;
-  });
+    result[eventId] = eventSummary
+  })
 
-  return result;
+  return result
 }
-
 
 module.exports = router

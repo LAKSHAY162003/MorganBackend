@@ -2,9 +2,8 @@
   "name": "morganstanley-hack-backend",
   "version": "0.1.0",
   "scripts": {
-    "dev": "nodemon",
-    "build": "vite build",
-    "preview": "vite preview"
+    "start": "node index.js",
+    "dev": "nodemon"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",

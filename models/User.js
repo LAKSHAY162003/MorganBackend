@@ -13,7 +13,7 @@ const UserSchema = new mongoose.Schema(
       name: String,
       age: Number,
       gender: String, //add  , also removed DOB
-      PhoneNumber: Number,
+      PhoneNumber: { type: Number, unique: true }, // Phone number is now unique
       address: {
         //add (nested inside basic details)
         address1: String,

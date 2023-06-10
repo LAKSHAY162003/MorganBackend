@@ -158,7 +158,6 @@ router.post("/register/admin", (req, res) => {
     }
   })
 })
-
 router.post("/register/byUser", (req, res) => {
   const { pwd, basicDetails, ...rest } = req.body
 
@@ -174,12 +173,15 @@ router.post("/register/byUser", (req, res) => {
         "Password, phone number, name, gender, and community are required.",
     })
   }
+  
   const _id = uuidv4()
+  
   bcrypt.hash(pwd, saltRounds, function (err, hash) {
     if (err) {
       return res.status(500).json({ message: err.message })
     } else {
       const tempCom = Community.toUpperCase()
+      
       const currentUser = new User({
         role: "User",
         pwd: hash,
@@ -197,7 +199,11 @@ router.post("/register/byUser", (req, res) => {
 
       User.insertMany([currentUser], function (err) {
         if (err) {
-          return res.status(500).json({ message: err.message })
+          if(err.code === 11000){
+            return res.status(500).json({ message: 'Phone number already exists.' })
+          } else {
+            return res.status(500).json({ message: err.message })
+          }
         } else {
           const user = {
             _id: currentUser._id,
@@ -211,6 +217,7 @@ router.post("/register/byUser", (req, res) => {
     }
   })
 })
+
 
 // registeration done by admin !! it is that route    , or just use the user registeration route and change the role to admin??
 router.post("/register/byAdmin", authorizeAdmin, (req, res) => {

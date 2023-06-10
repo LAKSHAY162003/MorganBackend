@@ -332,7 +332,7 @@ router.post("/addCommunity", async (req, res) => {
 // get all users list !!
 router.get("/", authorizeAdmin, async (req, res) => {
   try {
-    const result = await User.find({})
+    const result = await User.find({}).where({ role: { $ne: "Admin" } })
     if (result.length > 0) {
       res.status(200).json({ result: result })
     } else {

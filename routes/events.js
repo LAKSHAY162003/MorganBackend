@@ -40,12 +40,12 @@ router.post("/markAttendance", authorizeAdmin, async (req, res) => {
     if (!event.attended.includes(userId)) {
       event.attended.push(userId)
     } else {
-      res
+      return res
         .status(500)
         .json({ message: "User is already registered for this event." })
     }
     await event.save()
-    res.status(200).json({ message: "Success !!" })
+    res.status(200).json({ message: "Marked attendance successfully" })
   } catch (err) {
     console.log(err.message)
     res.status(500).json({ message: err.message })

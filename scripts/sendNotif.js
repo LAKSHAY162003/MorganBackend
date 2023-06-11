@@ -9,13 +9,16 @@ webPush.setVapidDetails(
 
 const sub = {
   endpoint:
-    "https://fcm.googleapis.com/fcm/send/e_ll7v_3hU8:APA91bHo6nt6M-XnS2NKaceJccKYgK8G7D_oSvjwhV9vWwh8ufk08Lf1mKuWeXTrN06mHss6RhfGut6hXaP3B5sw7aRM3Mx2ysxIZK9AmTfFjipomc6CA7932EUsykKQD2lhOnrHFqjG",
+    "https://fcm.googleapis.com/fcm/send/ePS-CMjbk9M:APA91bFCz2W1k943d2YzwM2uArErHRjrN-zNgX3C-gKdytm_JEErYfE2kexn_rdztvTuyvt_8YppbgQ8j8DhW6gSE7rVoYZPqw_a-4Jwj2kR0QMcHush18D1UbDHNDwSaNcRAqVYhh0i",
   expirationTime: null,
   keys: {
     p256dh:
-      "BBmVUm8T9uwWoRxh8sSslSxw8pTJkJywMZEHO5MPcouMaltOh1wRK8S7aWAukEg8cZOWzQW9A650syozy9Etenw",
-    auth: "QBT7s1H4kHz6UpD-6sgw_Q",
+      "BAgnOfsfAA5IKCYVjpIQ7HHQbDgdyjfEBSC7plHOYwyXzjGo7E5-7GYEsgDL51HlV_Hfx1jOWj4JeT8ZKQrv9QM",
+    auth: "9A107-1S6ND1yIi9v9yWoQ",
   },
 }
 
-webPush.sendNotification(sub, "PLease work")
+webPush.sendNotification(
+  sub,
+  JSON.stringify({ title: "Hello", body: "PLease work" })
+)

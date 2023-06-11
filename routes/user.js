@@ -714,6 +714,10 @@ router.post("/registerForEvent", authorizeUser, async (req, res) => {
     const event = await Event.findById(eventId)
     if (!event.registered.includes(userId)) {
       event.registered.push(userId)
+      await sendNotif(userId, {
+        title: "New Event Registration",
+        body: `You have successfully registered for the event ${event.eventName}`,
+      })
     } else {
       res
         .status(500)
@@ -758,6 +762,10 @@ router.post("/registerForAnEvent", async (req, res) => {
 
     if (!event.registered.includes(userId)) {
       event.registered.push(userId)
+      await sendNotif(userId, {
+        title: "New Event Registration",
+        body: `You have successfully registered for the event ${event.eventName}`,
+      })
     } else {
       return res.status(500).json({ message: "repeat" })
     }

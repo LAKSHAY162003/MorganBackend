@@ -4,9 +4,9 @@ const UserSchema = new mongoose.Schema(
   {
     pwd: { type: String, unique: true },
     role: String,
-    isFakeUser:{
-      type:Boolean,
-      default:false
+    isFakeUser: {
+      type: Boolean,
+      default: false,
     },
     _id: String, //add this using uuidv4  -  https://www.npmjs.com/package/uuidv4
     basicDetails: {
@@ -76,6 +76,15 @@ const UserSchema = new mongoose.Schema(
       },
     },
     insertedAt: Date,
+    subs: [
+      {
+        endpoint: { type: String },
+        keys: {
+          p256dh: String,
+          auth: String,
+        },
+      },
+    ],
   },
   { timestamps: true }
 )

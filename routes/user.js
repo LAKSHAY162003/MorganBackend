@@ -9,6 +9,13 @@ const authorizeUser = require("../middleware/userAuth")
 const authorizeAdmin = require("../middleware/adminAuth")
 const Event = require("../models/events")
 const { v4: uuidv4 } = require("uuid")
+const webPush = require("web-push")
+
+webPush.setVapidDetails(
+  process.env.VAPID_SUBJECT,
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+)
 
 // use same as registeration done by the userItself !! it is that route
 
@@ -173,15 +180,15 @@ router.post("/register/byUser", (req, res) => {
         "Password, phone number, name, gender, and community are required.",
     })
   }
-  
+
   const _id = uuidv4()
-  
+
   bcrypt.hash(pwd, saltRounds, function (err, hash) {
     if (err) {
       return res.status(500).json({ message: err.message })
     } else {
       const tempCom = Community.toUpperCase()
-      
+
       const currentUser = new User({
         role: "User",
         pwd: hash,
@@ -199,8 +206,10 @@ router.post("/register/byUser", (req, res) => {
 
       User.insertMany([currentUser], function (err) {
         if (err) {
-          if(err.code === 11000){
-            return res.status(500).json({ message: 'Phone number already exists.' })
+          if (err.code === 11000) {
+            return res
+              .status(500)
+              .json({ message: "Phone number already exists." })
           } else {
             return res.status(500).json({ message: err.message })
           }
@@ -217,7 +226,6 @@ router.post("/register/byUser", (req, res) => {
     }
   })
 })
-
 
 // registeration done by admin !! it is that route    , or just use the user registeration route and change the role to admin??
 router.post("/register/byAdmin", authorizeAdmin, (req, res) => {
@@ -901,11 +909,9 @@ router.post("/markUserFollowedUp", async (req, res) => {
     if (!event.followedUp.includes(userId)) {
       event.followedUp.push(userId)
     } else {
-      return res
-        .status(500)
-        .json({
-          message: "User is already marked as followed up for this event.",
-        })
+      return res.status(500).json({
+        message: "User is already marked as followed up for this event.",
+      })
     }
 
     await event.save()
@@ -937,5 +943,39 @@ router.get("/getFollowUpDone/:id", (req, res) => {
     }
   })
 })
+
+router.post("/addSub", async (req, res) => {
+  const { userId, sub } = req.body
+  const subExists = await User.exists({
+    _id: userId,
+    subs: { $elemMatch: { endpoint: sub.endpoint } },
+  })
+
+  if (subExists) return res.json({ message: "Subscription already exists" })
+  User.findByIdAndUpdate(userId, { $push: { subs: sub } })
+    .then(() => {
+      return res.json({ success: true })
+    })
+    .catch((e) => {
+      console.log(e)
+      res.json({ success: false })
+    })
+})
+
+const sendNotif = async (userId, payload) => {
+  const user = await User.findOne({ _id: userId })
+  console.log(user.subs)
+  user.subs.map(async (sub) => {
+    try {
+      await webPush.sendNotification(sub, JSON.stringify(payload))
+    } catch (e) {
+      if (e.statusCode === 404 || e.statusCode === 410) {
+        await User.findByIdAndUpdate(userId, {
+          $pull: { subs: { _id: sub._id } },
+        })
+      }
+    }
+  })
+}
 
 module.exports = router

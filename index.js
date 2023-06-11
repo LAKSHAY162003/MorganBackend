@@ -1,4 +1,4 @@
-  require("dotenv").config()
+require("dotenv").config()
 const express = require("express")
 const cors = require("cors")
 const db = require("./db")
@@ -29,6 +29,10 @@ app.use(
 
 app.use("/user", require("./routes/user"))
 app.use("/events", require("./routes/events"))
+
+app.app("*", (_, res) => {
+  res.json({ error: true, message: "route not found" })
+})
 
 db.connect().then(() => {
   app.set("port", process.env.PORT || 5000)
